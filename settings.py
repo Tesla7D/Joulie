@@ -1,1 +1,1 @@
-DOMAIN = {'user': {}}
+DOMAIN = {'people': {}}
