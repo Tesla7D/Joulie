@@ -1,7 +1,7 @@
 import os
-from eve import Eve
+from flask import Flask
 
-app = Eve()
+app = Flask(__name__)
 
 # Heroku support: bind to PORT if defined, otherwise default to 5000.
 if 'PORT' in os.environ:
@@ -21,7 +21,7 @@ def index():
 
 @app.route("/x")
 def default():
-    return "Default"
+    return "X"
 
 
 @app.route("/hello", methods=['GET'])
