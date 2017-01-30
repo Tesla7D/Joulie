@@ -11,7 +11,7 @@ if 'PORT' in os.environ:
     host = '0.0.0.0'
 else:
     port = 5000
-host = '127.0.0.1'
+    host = '127.0.0.1'
 
 
 @app.route("/")
