@@ -1,1 +1,4 @@
+eventlet==0.20.1
 Flask==0.12
+python-engineio==1.1.2
+python-socketio==1.6.3

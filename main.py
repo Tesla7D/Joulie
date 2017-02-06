@@ -1,5 +1,4 @@
 import socketio
-import eventlet
 import eventlet.wsgi
 import os
 from flask import Flask, render_template
