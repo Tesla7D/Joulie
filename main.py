@@ -1,6 +1,10 @@
+import socketio
+import eventlet
+import eventlet.wsgi
 import os
-from flask import Flask
+from flask import Flask, render_template
 
+sio = socketio.Server()
 app = Flask(__name__)
 
 # Heroku support: bind to PORT if defined, otherwise default to 5000.
@@ -10,24 +14,30 @@ if 'PORT' in os.environ:
     # network (and not only your computer).
     host = '0.0.0.0'
 else:
-    port = 5000
+    port = 8000
     host = '127.0.0.1'
 
-
-@app.route("/")
+@app.route('/')
 def index():
-    return "Index"
+    """Serve the client-side application."""
+    return render_template('index.html')
 
+@sio.on('connect', namespace='/chat')
+def connect(sid, environ):
+    print("connect ", sid)
 
-@app.route("/x")
-def default():
-    return "X"
+@sio.on('chat message', namespace='/chat')
+def message(sid, data):
+    print("message ", data)
+    sio.emit('chat message', data, namespace='/chat')
 
-
-@app.route("/hello", methods=['GET'])
-def hello():
-    return "Hello World!"
-
+@sio.on('disconnect', namespace='/chat')
+def disconnect(sid):
+    print('disconnect ', sid)
 
 if __name__ == '__main__':
-    app.run(host=host, port=port)
+    # wrap Flask application with engineio's middleware
+    app = socketio.Middleware(sio, app)
+
+    # deploy as an eventlet WSGI server
+    eventlet.wsgi.server(eventlet.listen(('', port)), app)
