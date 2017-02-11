@@ -39,26 +39,27 @@ def index():
 @app.route('/device', methods=['POST'])
 def addDevice():
     data = request.data
-    response = requests.post(cylon_url + "\\" + cylon_create_device, data=data)
+    response = requests.post(cylon_url + "/" + cylon_create_device, data=data)
 
     return "device added"
 
 @app.route('/device_test', methods=['POST'])
 def addDeviceT():
     data = request.data
-    return requests.post(cylon_url + "\\" + cylon_create_device, data=data)
+    return requests.post(cylon_url + "/" + cylon_create_device, data=data)
 
 @app.route('/device/<uuid:device_id>', methods=['DELETE'])
 def removeDevice(device_id):
     data = request.data
-    response = requests.post(cylon_url + "\\" + cylon_remove_device, data=data)
+    url = cylon_url + "/" + cylon_remove_device
+    response = requests.post(url, data=data)
 
     return "device %" + str(device_id) + "% removed"
 
 @app.route('/device_test', methods=['DELETE'])
 def removeDeviceT():
     data = request.data
-    return requests.post(cylon_url + "\\" + cylon_remove_device, data=data)
+    return requests.post(cylon_url + "/" + cylon_remove_device, data=data)
 
 @app.route('/user', methods=['POST'])
 def addUser():
