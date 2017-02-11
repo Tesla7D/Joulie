@@ -7,8 +7,8 @@ from flask import Flask, render_template, request
 from utilities import DatabaseManager
 
 cylon_url = "https://joulie-cylon.herokuapp.com"
-cylon_create_device = "api/robots/kyle/commands/create_device"
-cylon_remove_device = "api/robots/kyle/commands/remove_device"
+cylon_create_device = "api/robots/{}/commands/create_device"
+cylon_remove_device = "api/robots/{}/commands/remove_device"
 
 sio = socketio.Server()
 app = Flask(__name__)
@@ -39,19 +39,31 @@ def index():
 @app.route('/device', methods=['POST'])
 def addDevice():
     data = request.data
-    response = requests.post(cylon_url + "/" + cylon_create_device, data=data)
+    url = cylon_url + "/" + cylon_create_device.format("kyle")
+    response = requests.post(url, data=data)
 
     return "device added"
 
 @app.route('/device_test', methods=['POST'])
 def addDeviceT():
     data = request.data
-    return requests.post(cylon_url + "/" + cylon_create_device, data=data)
+    url = cylon_url + "/" + cylon_create_device.format("kyle")
+
+    response = requests.post(url, data=data)
+    return response.text
+
+@app.route('/device_test/<string:name>', methods=['POST'])
+def addDeviceTParam(name):
+    data = request.data
+    url = cylon_url + "/" + cylon_create_device.format(str(name))
+
+    response = requests.post(url, data=data)
+    return response.text
 
 @app.route('/device/<uuid:device_id>', methods=['DELETE'])
 def removeDevice(device_id):
     data = request.data
-    url = cylon_url + "/" + cylon_remove_device
+    url = cylon_url + "/" + cylon_remove_device.format("kyle")
     response = requests.post(url, data=data)
 
     return "device %" + str(device_id) + "% removed"
@@ -59,7 +71,10 @@ def removeDevice(device_id):
 @app.route('/device_test', methods=['DELETE'])
 def removeDeviceT():
     data = request.data
-    return requests.post(cylon_url + "/" + cylon_remove_device, data=data)
+    url = cylon_url + "/" + cylon_remove_device.format("kyle")
+
+    response = requests.post(url, data=data)
+    return response.text
 
 @app.route('/user', methods=['POST'])
 def addUser():
