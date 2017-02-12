@@ -38,7 +38,7 @@ def index():
 
 @app.route('/device', methods=['POST'])
 def addDevice():
-    data = request.data
+    data = str(request.data)
     url = cylon_url + "/" + cylon_create_device.format("kyle")
     response = requests.post(url, data=data)
 
@@ -46,7 +46,7 @@ def addDevice():
 
 @app.route('/device_test', methods=['POST'])
 def addDeviceT():
-    data = request.data
+    data = str(request.data)
     url = cylon_url + "/" + cylon_create_device.format("kyle")
 
     response = requests.post(url, data=data)
@@ -54,7 +54,7 @@ def addDeviceT():
 
 @app.route('/device_test/<string:name>', methods=['POST'])
 def addDeviceTParam(name):
-    data = request.data
+    data = str(request.data)
     url = cylon_url + "/" + cylon_create_device.format(str(name))
 
     response = requests.post(url, data=data)
@@ -62,7 +62,7 @@ def addDeviceTParam(name):
 
 @app.route('/device/<uuid:device_id>', methods=['DELETE'])
 def removeDevice(device_id):
-    data = request.data
+    data = str(request.data)
     url = cylon_url + "/" + cylon_remove_device.format("kyle")
     response = requests.post(url, data=data)
 
@@ -70,7 +70,7 @@ def removeDevice(device_id):
 
 @app.route('/device_test', methods=['DELETE'])
 def removeDeviceT():
-    data = request.data
+    data = str(request.data)
     url = cylon_url + "/" + cylon_remove_device.format("kyle")
 
     response = requests.post(url, data=data)
