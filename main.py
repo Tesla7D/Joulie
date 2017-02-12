@@ -2,6 +2,7 @@ import os
 import socketio
 import eventlet.wsgi
 import requests
+import json
 from flask import Flask, render_template, request
 
 from utilities import DatabaseManager
@@ -9,6 +10,8 @@ from utilities import DatabaseManager
 cylon_url = "https://joulie-cylon.herokuapp.com"
 cylon_create_device = "api/robots/{}/commands/create_device"
 cylon_remove_device = "api/robots/{}/commands/remove_device"
+cylon_add_robot = "api/commands/create_robot"
+cylon_remove_robot = "api/commands/remove_robot"
 
 sio = socketio.Server()
 app = Flask(__name__)
@@ -56,6 +59,22 @@ def addDeviceT():
 def addDeviceTParam(name):
     data = str(request.data)
     url = cylon_url + "/" + cylon_create_device.format(str(name))
+
+    response = requests.post(url, data=data)
+    return response.text
+
+@app.route('/robot_test/<string:name>', methods=['POST'])
+def addRobotT(name):
+    data = json.dumps(str(request.data))
+    url = cylon_url + "/" + cylon_add_robot
+
+    response = requests.post(url, data=data)
+    return response.text
+
+@app.route('/robot_test/<string:name>', methods=['DELETE'])
+def removeRobotT(name):
+    data = str(request.data)
+    url = cylon_url + "/" + cylon_remove_robot
 
     response = requests.post(url, data=data)
     return response.text
