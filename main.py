@@ -41,7 +41,7 @@ def index():
 
 @app.route('/device', methods=['POST'])
 def addDevice():
-    data = str(request.data)
+    data = json.dumps(str(request.data))
     url = cylon_url + "/" + cylon_create_device.format("kyle")
     response = requests.post(url, data=data)
 
@@ -49,7 +49,7 @@ def addDevice():
 
 @app.route('/device_test', methods=['POST'])
 def addDeviceT():
-    data = str(request.data)
+    data = json.dumps(str(request.data))
     url = cylon_url + "/" + cylon_create_device.format("kyle")
 
     response = requests.post(url, data=data)
@@ -57,10 +57,10 @@ def addDeviceT():
 
 @app.route('/device_test/<string:name>', methods=['POST'])
 def addDeviceTParam(name):
-    data = str(request.data)
+    data = json.dumps(str(request.data))
     url = cylon_url + "/" + cylon_create_device.format(str(name))
 
-    response = requests.post(url, data=data)
+    response = requests.post(url, json=data)
     return response.text
 
 @app.route('/robot_test/<string:name>', methods=['POST'])
@@ -68,31 +68,31 @@ def addRobotT(name):
     data = json.dumps(str(request.data))
     url = cylon_url + "/" + cylon_add_robot
 
-    response = requests.post(url, data=data)
+    response = requests.post(url, json=data)
     return response.text
 
 @app.route('/robot_test/<string:name>', methods=['DELETE'])
 def removeRobotT(name):
-    data = str(request.data)
+    data = json.dumps(str(request.data))
     url = cylon_url + "/" + cylon_remove_robot
 
-    response = requests.post(url, data=data)
+    response = requests.post(url, json=data)
     return response.text
 
 @app.route('/device/<uuid:device_id>', methods=['DELETE'])
 def removeDevice(device_id):
-    data = str(request.data)
+    data = json.dumps(str(request.data))
     url = cylon_url + "/" + cylon_remove_device.format("kyle")
-    response = requests.post(url, data=data)
+    response = requests.post(url, json=data)
 
     return "device %" + str(device_id) + "% removed"
 
 @app.route('/device_test', methods=['DELETE'])
 def removeDeviceT():
-    data = str(request.data)
+    data = json.dumps(str(request.data))
     url = cylon_url + "/" + cylon_remove_device.format("kyle")
 
-    response = requests.post(url, data=data)
+    response = requests.post(url, json=data)
     return response.text
 
 @app.route('/user', methods=['POST'])
