@@ -39,9 +39,21 @@ def index():
     """Serve the client-side application."""
     return render_template('index.html')
 
+@app.route('/data', methods=['GET'])
+def getData():
+    data = {
+            "point1": {"timestamp": "201702121140", "value": "50"}
+            , "point2": {"timestamp": "201702121150", "value": "20"}
+            , "point3": {"timestamp": "201702121200", "value": "30"}
+            , "point4": {"timestamp": "201702121210", "value": "40"}
+            , "point5": {"timestamp": "201702121220", "value": "75"}
+            }
+
+    return json.dumps(data)
+
 @app.route('/device', methods=['POST'])
 def addDevice():
-    data = json.dumps(str(request.data))
+    data = request.get_json(force=True)
     url = cylon_url + "/" + cylon_create_device.format("kyle")
     response = requests.post(url, data=data)
 
@@ -49,7 +61,7 @@ def addDevice():
 
 @app.route('/device_test', methods=['POST'])
 def addDeviceT():
-    data = json.dumps(str(request.data))
+    data = request.get_json(force=True)
     url = cylon_url + "/" + cylon_create_device.format("kyle")
 
     response = requests.post(url, data=data)
@@ -57,7 +69,7 @@ def addDeviceT():
 
 @app.route('/device_test/<string:name>', methods=['POST'])
 def addDeviceTParam(name):
-    data = json.dumps(str(request.data))
+    data = request.get_json(force=True)
     url = cylon_url + "/" + cylon_create_device.format(str(name))
 
     response = requests.post(url, json=data)
@@ -65,7 +77,7 @@ def addDeviceTParam(name):
 
 @app.route('/robot_test/<string:name>', methods=['POST'])
 def addRobotT(name):
-    data = json.dumps(str(request.data))
+    data = request.get_json(force=True)
     url = cylon_url + "/" + cylon_add_robot
 
     response = requests.post(url, json=data)
@@ -73,7 +85,7 @@ def addRobotT(name):
 
 @app.route('/robot_test/<string:name>', methods=['DELETE'])
 def removeRobotT(name):
-    data = json.dumps(str(request.data))
+    data = request.get_json(force=True)
     url = cylon_url + "/" + cylon_remove_robot
 
     response = requests.post(url, json=data)
@@ -81,7 +93,7 @@ def removeRobotT(name):
 
 @app.route('/device/<uuid:device_id>', methods=['DELETE'])
 def removeDevice(device_id):
-    data = json.dumps(str(request.data))
+    data = request.get_json(force=True)
     url = cylon_url + "/" + cylon_remove_device.format("kyle")
     response = requests.post(url, json=data)
 
@@ -89,7 +101,7 @@ def removeDevice(device_id):
 
 @app.route('/device_test', methods=['DELETE'])
 def removeDeviceT():
-    data = json.dumps(str(request.data))
+    data = request.get_json(force=True)
     url = cylon_url + "/" + cylon_remove_device.format("kyle")
 
     response = requests.post(url, json=data)
