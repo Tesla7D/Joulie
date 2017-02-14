@@ -3,6 +3,7 @@ import socketio
 import eventlet.wsgi
 import requests
 import json
+import threading
 from flask import Flask, render_template, request
 
 from utilities import DatabaseManager
@@ -15,6 +16,13 @@ cylon_remove_robot = "api/commands/remove_robot"
 
 sio = socketio.Server()
 app = Flask(__name__)
+
+def cylon_check():
+  threading.Timer(300, cylon_check).start()
+  print "Calling Cylon..."
+  response = requests.get(cylon_url)
+
+cylon_check()
 
 # db = DatabaseManager.DatabaseManager()
 # db.CreateBook()
