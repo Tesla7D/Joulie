@@ -6,16 +6,13 @@ class Book(peewee.Model):
     title = peewee.TextField()
 
     class Meta:
-        database = MySQLDatabase("heroku_c25c250c1ee9407", host="us-cdbr-iron-east-04.cleardb.net", user="b4f20d2e807ead", passwd="2709d0cd")
+        database = MySQLDatabase()
 
 class DatabaseManager(object):
 
     def __init__(self):
-        self.host = "us-cdbr-iron-east-04.cleardb.net"
-        self.username = "b4f20d2e807ead"
-        self.password = "2709d0cd"
 
-        self.db = MySQLDatabase(self.host, user=self.username, passwd=self.password)
+        self.db = MySQLDatabase()
 
         Book.create_table()
 
