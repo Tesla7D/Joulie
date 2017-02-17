@@ -1,30 +1,19 @@
-import peewee
-from peewee import *
-
-class Book(peewee.Model):
-    author = peewee.CharField()
-    title = peewee.TextField()
-
-    class Meta:
-        database = MySQLDatabase()
+import datetime
+from models import User
 
 class DatabaseManager(object):
-
     def __init__(self):
+        i = 0
 
-        self.db = MySQLDatabase()
+    def CreateUser(self):
+        user = User.Users(group_id=2, email="test", nickname="nick ick", last_activity_date=datetime.datetime.utcnow())
+        user.save()
 
-        Book.create_table()
-
-    def CreateBook(self):
-        book = Book(author="me", title='Peewee is cool')
-        book.save()
-
-    def GetBook(self):
+    def GetUser(self):
         result = ""
 
-        for book in Book.filter(author="me"):
-            result += book.title
+        for user in User.Users:
+            result += user.nickname
 
         return result
 

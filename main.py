@@ -25,8 +25,8 @@ def cylon_check():
 cylon_check()
 
 # db = DatabaseManager.DatabaseManager()
-# db.CreateBook()
-# print(db.GetBook())
+# db.CreateUser()
+# print(db.GetUser())
 
 # Heroku support: bind to PORT if defined, otherwise default to 5000.
 if 'PORT' in os.environ:
