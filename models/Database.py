@@ -14,13 +14,14 @@ if ('MYSQL_DATABASE' in os.environ and
     host = os.environ.get('MYSQL_HOST')
     user = os.environ.get('MYSQL_USER')
     password = os.environ.get('MYSQL_PASSWORD')
-with open('connection.json') as data_file:
-    data = json.load(data_file)
+else:
+    with open('connection.json') as data_file:
+        data = json.load(data_file)
 
-    database = data["database"]
-    host = data["host"]
-    user = data["user"]
-    password = data["password"]
+        database = data["database"]
+        host = data["host"]
+        user = data["user"]
+        password = data["password"]
 
 db = MySQLDatabase(database=database, host=host, user=user, passwd=password)
 
