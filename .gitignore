@@ -1,6 +1,12 @@
-.idea/workspace.xml
-.idea/workspace.xml
-.idea/misc.xml
+# directories
+.idea/
+tests/.cache/
+
+# file types
+*.pyc
+
+# single files
 utilities/pwd
 connection.json
-*.pyc
+
+.idea/

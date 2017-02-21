@@ -25,6 +25,7 @@ def cylon_check():
 cylon_check()
 
 # db = DatabaseManager.DatabaseManager()
+# db.AddUserGroup()
 # db.CreateUser()
 # print(db.GetUser())
 
