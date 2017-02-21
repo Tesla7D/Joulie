@@ -7,7 +7,7 @@ install:
   - pip install pytest
 # command to run tests
 script:
-  - pytest
+  - py.test
 # slack endpoint
 notifications:
   slack: setcapstone:J5nrm5VsGGJsGLqbIJGoPj0k
