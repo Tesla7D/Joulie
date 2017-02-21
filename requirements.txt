@@ -1,7 +1,7 @@
 peewee
+pytest
 requests
 eventlet
 Flask
 python-engineio
 python-socketio
-pytest
