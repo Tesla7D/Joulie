@@ -1,4 +1,5 @@
 import requests
+import json
 
 
 #
@@ -6,7 +7,8 @@ import requests
 #
 class HttpManager(object):
 
-    def Post(self, url, data=None, json=None, headers=None):
+    @staticmethod
+    def Post(url, data=None, json=None, headers=None):
         if json != None:
             if headers != None:
                 return requests.post(url, json=json, headers=headers)
@@ -18,7 +20,8 @@ class HttpManager(object):
 
         return requests.post(url, data=data)
 
-    def Get(self, url, data=None, json=None, headers=None):
+    @staticmethod
+    def Get(url, data=None, json=None, headers=None):
         if json != None:
             if headers != None:
                 return requests.get(url, json=json, headers=headers)
@@ -37,8 +40,9 @@ class HttpManager(object):
 class CylonManager(HttpManager):
 
     cylon_url = "https://joulie-cylon.herokuapp.com"
-    cylon_create_device = "api/robots/{}/commands/create_device"
-    cylon_remove_device = "api/robots/{}/commands/remove_device"
+    cylon_robot = "api/robots/{}"
+    cylon_create_device = "commands/create_device"
+    cylon_remove_device = "commands/remove_device"
     cylon_add_robot = "api/commands/create_robot"
     cylon_remove_robot = "api/commands/remove_robot"
 
@@ -55,12 +59,19 @@ class CylonManager(HttpManager):
 
         return requests.post(url, data=data)
 
-    def AddRobot(self, data):
+    def GetRobot(self, name):
+        url = self.cylon_url + "/" + self.cylon_robot.format(name)
+
+        return HttpManager.Get(url)
+
+    def AddRobot(self, name):
         url = self.cylon_url + "/" + self.cylon_add_robot
+        data = {'opts': {'name': name}}
 
-        return requests.post(url, data=data)
+        return HttpManager.Post(url, json=data)
 
-    def RemoveRobot(self, data):
+    def RemoveRobot(self, name):
         url = self.cylon_url + "/" + self.cylon_remove_robot
 
-        return requests.post(url, data=data)
+        data = {'opts': {'name': name}}
+        return HttpManager.Post(url, json=data)
