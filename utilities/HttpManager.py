@@ -41,6 +41,7 @@ class CylonManager(HttpManager):
 
     cylon_url = "https://joulie-cylon.herokuapp.com"
     cylon_robot = "api/robots/{}"
+    cylon_device = "devices/{}"
     cylon_create_device = "commands/create_device"
     cylon_remove_device = "commands/remove_device"
     cylon_add_robot = "api/commands/create_robot"
@@ -49,15 +50,33 @@ class CylonManager(HttpManager):
     def __init__(self):
          i = 0
 
-    def AddDevice(self, name, data=None, json=None, headers=None):
-        url = self.cylon_url + "/" + self.cylon_create_device.format(name)
+    def GetDevice(self, robot, name):
+        url = self.cylon_url + "/" + \
+              self.cylon_robot.format(robot) + "/" + \
+              self.cylon_device.format(name)
 
-        return super(CylonManager, self).Post(url, data, json, headers)
+        return HttpManager.Get(url)
 
-    def RemoveDevice(self, name, data):
-        url = self.cylon_url + "/" + self.cylon_remove_device.format(name)
+    def AddNestDevice(self, robot, name, token):
+        url = self.cylon_url + "/" + \
+              self.cylon_robot.format(robot) + "/" + \
+              self.cylon_create_device
+        data = {'opts': {'device_name': name,
+                         'conn_name': 'nest',
+                         'adaptor': 'nest',
+                         'token': token,
+                         'driver': 'nest-thermostat'
+                         }}
 
-        return requests.post(url, data=data)
+        return HttpManager.Post(url, json=data)
+
+    def RemoveNestDevice(self, robot, name, token):
+        url = self.cylon_url + "/" + \
+              self.cylon_robot.format(robot) + "/" + \
+              self.cylon_remove_device
+        data = {'opts': {'name': name}}
+
+        return HttpManager.Post(url, json=data)
 
     def GetRobot(self, name):
         url = self.cylon_url + "/" + self.cylon_robot.format(name)
