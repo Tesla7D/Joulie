@@ -63,9 +63,11 @@ class CylonManager(HttpManager):
               self.cylon_create_device
         data = {'opts': {'device_name': name,
                          'conn_name': 'nest',
+                         'connection': 'nest',
                          'adaptor': 'nest',
-                         'token': token,
-                         'driver': 'nest-thermostat'
+                         'accessToken': token,
+                         'driver': 'nest-thermostat',
+                         'deviceId': 'sPmk4pq4eGMa7nT5eiYy5G66DVALDY-J'
                          }}
 
         return HttpManager.Post(url, json=data)
@@ -74,7 +76,9 @@ class CylonManager(HttpManager):
         url = self.cylon_url + "/" + \
               self.cylon_robot.format(robot) + "/" + \
               self.cylon_remove_device
-        data = {'opts': {'name': name}}
+        data = {'opts': {'name': name,
+                         'deviceId': 'sPmk4pq4eGMa7nT5eiYy5G66DVALDY-J'
+                         }}
 
         return HttpManager.Post(url, json=data)
 

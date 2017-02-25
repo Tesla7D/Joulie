@@ -55,6 +55,7 @@ def test_nestDevices():
 
     result = cylon.RemoveNestDevice(DEFAULT_ROBOT, name, DEFAULT_TOKEN)
     assert result.status_code == 200
+    assert result.text.find("device removed") != -1
 
     result = cylon.GetDevice(DEFAULT_ROBOT, name)
     assert result.status_code == 404
