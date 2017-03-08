@@ -4,6 +4,7 @@ import eventlet.wsgi
 import requests
 import json
 import threading
+from utilities.HttpManager import *
 from flask import Flask, render_template, request
 
 from utilities import DatabaseManager
@@ -13,9 +14,11 @@ cylon_create_device = "api/robots/{}/commands/create_device"
 cylon_remove_device = "api/robots/{}/commands/remove_device"
 cylon_add_robot = "api/commands/create_robot"
 cylon_remove_robot = "api/commands/remove_robot"
+cylon_command = "api/robots/{}/devices/{}/commands/{}"
 
 sio = socketio.Server()
 app = Flask(__name__)
+cylon = CylonManager()
 
 def cylon_check():
   threading.Timer(300, cylon_check).start()
@@ -60,6 +63,12 @@ def getData():
 
     return json.dumps(data)
 
+@app.route('/device/nest', methods=['POST'])
+def addNestDevice():
+    data = request.get_json(force=True)
+
+    return cylon.AddNestDevice(json=data)
+
 @app.route('/device', methods=['POST'])
 def addDevice():
     data = request.get_json(force=True)
@@ -88,6 +97,14 @@ def addDeviceTParam(name):
 def addRobotT(name):
     data = request.get_json(force=True)
     url = cylon_url + "/" + cylon_add_robot
+
+    response = requests.post(url, json=data)
+    return response.text
+
+@app.route('/robot/<string:robot>/device/<string:device>/<string:command>', methods=['POST'])
+def deviceCommand(robot, device, command):
+    data = request.get_json(force=True)
+    url = cylon_url + "/" + cylon_command.format(str(robot), str(device), str(command))
 
     response = requests.post(url, json=data)
     return response.text

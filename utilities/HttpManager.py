@@ -57,18 +57,22 @@ class CylonManager(HttpManager):
 
         return HttpManager.Get(url)
 
-    def AddNestDevice(self, robot, name, token):
+    def AddNestDevice(self, robot, name, token, json=None):
         url = self.cylon_url + "/" + \
               self.cylon_robot.format(robot) + "/" + \
               self.cylon_create_device
-        data = {'opts': {'device_name': name,
-                         'conn_name': 'nest',
-                         'connection': 'nest',
-                         'adaptor': 'nest',
-                         'accessToken': token,
-                         'driver': 'nest-thermostat',
-                         'deviceId': 'sPmk4pq4eGMa7nT5eiYy5G66DVALDY-J'
-                         }}
+
+        if json != None:
+            data = json
+        else:
+            data = {'opts': {'device_name': name,
+                             'conn_name': 'nest',
+                             'connection': 'nest',
+                             'adaptor': 'nest',
+                             'accessToken': token,
+                             'driver': 'nest-thermostat',
+                             'deviceId': 'sPmk4pq4eGMa7nT5eiYy5G66DVALDY-J'
+                             }}
 
         return HttpManager.Post(url, json=data)
 
