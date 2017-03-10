@@ -66,7 +66,7 @@ def getData():
 #
 # Device
 #
-@app.route('robot/<uuid:robot>/device', methods=['POST'])
+@app.route('/robot/<uuid:robot>/device', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def addDevice(robot):
@@ -76,13 +76,13 @@ def addDevice(robot):
     response = requests.post(url, data=data)
     return response.text
 
-@app.route('robot/<uuid:robot>/device/<uuid:device>', methods=['DELETE'])
+@app.route('/robot/<uuid:robot>/device/<uuid:device>', methods=['DELETE'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def removeDevice(robot, device):
     return cylon.RemoveDevice(robot, device)
 
-@app.route('robot_test/<uuid:robot>/device', methods=['POST'])
+@app.route('/robot_test/<uuid:robot>/device', methods=['POST'])
 def addDevice_test(robot):
     data = request.get_json(force=True)
     url = cylon_url + "/" + cylon_create_device.format(str(robot))
@@ -90,7 +90,7 @@ def addDevice_test(robot):
     response = requests.post(url, data=data)
     return response.text
 
-@app.route('robot_test/<uuid:robot>/device/<uuid:device>', methods=['DELETE'])
+@app.route('/robot_test/<uuid:robot>/device/<uuid:device>', methods=['DELETE'])
 def removeDevice_test(robot, device):
     return cylon.RemoveDevice(robot, device)
 
