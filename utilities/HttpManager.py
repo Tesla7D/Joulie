@@ -1,5 +1,4 @@
 import requests
-import json
 
 
 #
@@ -56,6 +55,14 @@ class CylonManager(HttpManager):
               self.cylon_device.format(name)
 
         return HttpManager.Get(url)
+
+    def RemoveDevice(self, robot, name):
+        url = self.cylon_url + "/" + \
+              self.cylon_robot.format(robot) + "/" + \
+              self.cylon_remove_device
+        data = {'opts': {'name': name}}
+
+        return HttpManager.Post(url, json=data)
 
     def AddNestDevice(self, robot, name, token, json=None):
         url = self.cylon_url + "/" + \

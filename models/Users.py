@@ -10,7 +10,7 @@ class Users(peewee.Model):
     email = peewee.CharField()
     nickname = peewee.CharField()
     creation_date = peewee.DateTimeField(default=datetime.datetime.utcnow)
-    last_activity_date = peewee.DateTimeField()
+    last_activity_date = peewee.DateTimeField(default=datetime.datetime.utcnow)
 
     class Meta:
         database = Database.database()

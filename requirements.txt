@@ -1,3 +1,4 @@
+jwt
 peewee
 pytest
 requests
@@ -6,3 +7,5 @@ Flask
 python-engineio
 python-socketio
 PyMySQL
+PyJWT
+flask-cors

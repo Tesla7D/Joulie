@@ -8,5 +8,6 @@ tests/.cache/
 # single files
 utilities/pwd
 connection.json
+authO.json
 
 .idea/

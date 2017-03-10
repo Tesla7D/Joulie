@@ -1,13 +1,12 @@
 import os
 import socketio
 import eventlet.wsgi
-import requests
 import json
 import threading
 from utilities.HttpManager import *
+from utilities.AuthO import requires_auth
 from flask import Flask, render_template, request
-
-from utilities import DatabaseManager
+from flask_cors import cross_origin
 
 cylon_url = "https://joulie-cylon.herokuapp.com"
 cylon_create_device = "api/robots/{}/commands/create_device"
@@ -63,45 +62,69 @@ def getData():
 
     return json.dumps(data)
 
-@app.route('/device/nest', methods=['POST'])
-def addNestDevice():
+
+#
+# Device
+#
+@app.route('robot/<uuid:robot>/device', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def addDevice(robot):
     data = request.get_json(force=True)
-
-    return cylon.AddNestDevice(json=data)
-
-@app.route('/device', methods=['POST'])
-def addDevice():
-    data = request.get_json(force=True)
-    url = cylon_url + "/" + cylon_create_device.format("kyle")
-    response = requests.post(url, data=data)
-
-    return "device added"
-
-@app.route('/device_test', methods=['POST'])
-def addDeviceT():
-    data = request.get_json(force=True)
-    url = cylon_url + "/" + cylon_create_device.format("kyle")
+    url = cylon_url + "/" + cylon_create_device.format(str(robot))
 
     response = requests.post(url, data=data)
     return response.text
 
-@app.route('/device_test/<string:name>', methods=['POST'])
-def addDeviceTParam(name):
-    data = request.get_json(force=True)
-    url = cylon_url + "/" + cylon_create_device.format(str(name))
+@app.route('robot/<uuid:robot>/device/<uuid:device>', methods=['DELETE'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def removeDevice(robot, device):
+    return cylon.RemoveDevice(robot, device)
 
-    response = requests.post(url, json=data)
+@app.route('robot_test/<uuid:robot>/device', methods=['POST'])
+def addDevice_test(robot):
+    data = request.get_json(force=True)
+    url = cylon_url + "/" + cylon_create_device.format(str(robot))
+
+    response = requests.post(url, data=data)
     return response.text
+
+@app.route('robot_test/<uuid:robot>/device/<uuid:device>', methods=['DELETE'])
+def removeDevice_test(robot, device):
+    return cylon.RemoveDevice(robot, device)
+
+
+#
+# Robot
+#
+@app.route('/robot/<string:name>', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def addRobot(name):
+    return cylon.AddRobot(name)
+
+@app.route('/robot/<string:name>', methods=['DELETE'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def removeRobot(name):
+    return cylon.RemoveRobot(name)
 
 @app.route('/robot_test/<string:name>', methods=['POST'])
-def addRobotT(name):
-    data = request.get_json(force=True)
-    url = cylon_url + "/" + cylon_add_robot
+def addRobot_test(name):
+    return cylon.AddRobot(name)
 
-    response = requests.post(url, json=data)
-    return response.text
+@app.route('/robot_test/<string:name>', methods=['DELETE'])
+def removeRobot_test(name):
+    return cylon.RemoveRobot(name)
 
+
+#
+# Run Command
+#
 @app.route('/robot/<string:robot>/device/<string:device>/<string:command>', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
 def deviceCommand(robot, device, command):
     data = request.get_json(force=True)
     url = cylon_url + "/" + cylon_command.format(str(robot), str(device), str(command))
@@ -109,37 +132,14 @@ def deviceCommand(robot, device, command):
     response = requests.post(url, json=data)
     return response.text
 
-@app.route('/robot_test/<string:name>', methods=['DELETE'])
-def removeRobotT(name):
+@app.route('/robot_test/<string:robot>/device/<string:device>/<string:command>', methods=['POST'])
+def deviceCommand_test(robot, device, command):
     data = request.get_json(force=True)
-    url = cylon_url + "/" + cylon_remove_robot
+    url = cylon_url + "/" + cylon_command.format(str(robot), str(device), str(command))
 
     response = requests.post(url, json=data)
     return response.text
 
-@app.route('/device/<uuid:device_id>', methods=['DELETE'])
-def removeDevice(device_id):
-    data = request.get_json(force=True)
-    url = cylon_url + "/" + cylon_remove_device.format("kyle")
-    response = requests.post(url, json=data)
-
-    return "device %" + str(device_id) + "% removed"
-
-@app.route('/device_test', methods=['DELETE'])
-def removeDeviceT():
-    data = request.get_json(force=True)
-    url = cylon_url + "/" + cylon_remove_device.format("kyle")
-
-    response = requests.post(url, json=data)
-    return response.text
-
-@app.route('/user', methods=['POST'])
-def addUser():
-    return "logged in"
-
-@app.route('/user/<uuid:user_id>', methods=['DELETE'])
-def removeUser(user_id):
-    return "user %" + str(user_id) + "% removed"
 
 #
 # Socket.io endpoints
