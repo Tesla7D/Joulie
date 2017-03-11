@@ -32,3 +32,10 @@ You can specify robot name as any string, but please try to use uuid
     * Robot and device are used to construct a path to the device
     * Command is the command you would like to run on the device
     * Included json will be simply forwarder to cylon
+
+### Users
+* New user
+  * Do POST to https://joulie-core.herokuapp.com/newuser
+  * Authentication token is required here
+  * I can include json to specify cylon_url: {"url": "http://localhost:8000"}
+  
