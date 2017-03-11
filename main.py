@@ -3,8 +3,10 @@ import socketio
 import eventlet.wsgi
 import json
 import threading
+import uuid
 from utilities.HttpManager import *
-from utilities.AuthO import requires_auth
+from utilities.DatabaseManager import *
+from utilities.AuthO import requires_auth, GetUserId
 from flask import Flask, render_template, request
 from flask_cors import cross_origin
 
@@ -18,6 +20,7 @@ cylon_command = "api/robots/{}/devices/{}/commands/{}"
 sio = socketio.Server()
 app = Flask(__name__)
 cylon = CylonManager()
+db = DatabaseManager()
 
 def cylon_check():
   threading.Timer(300, cylon_check).start()
@@ -61,6 +64,38 @@ def getData():
             }
 
     return json.dumps(data)
+
+
+#
+# User
+#
+@app.route('/newuser', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def newUser():
+    data = request.get_json()
+    head = request.headers
+
+    user_id = GetUserId(head)
+    user = db.GetUser(user_id=user_id)
+
+    url = cylon_url
+    if (data and
+        'url' in data and
+        data['url']):
+        url = data['url']
+    guid = str(uuid.uuid4())
+    if user:
+        if not user.uuid:
+            user.uuid = guid
+        if not user.cylon_url:
+            user.cylon_url = url
+
+        user.save()
+        return "User Updated"
+
+    db.AddUser(user_id, url, guid)
+    return "User Added"
 
 
 #

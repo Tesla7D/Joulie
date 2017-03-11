@@ -1,8 +1,13 @@
 import jwt
 import os
 import json
+from utilities.HttpManager import HttpManager
 from functools import wraps
 from flask import request, jsonify, _app_ctx_stack
+
+autho_url = "https://joulie.auth0.com"
+autho_tokeninfo = "tokeninfo"
+autho_user_id_field = "?fields=user_id"
 
 client_id = client_secret = ""
 dirName = "Joulie"
@@ -83,3 +88,25 @@ def requires_auth(f):
         return f(*args, **kwargs)
 
     return decorated
+
+def GetUserInfo(header):
+    token = header.get('Authorization', None)
+    if not token:
+        raise AttributeError("No `Authorization` key in the header")
+
+    parts = token.split()
+    if len(parts) != 2:
+        raise AttributeError("Authorization header has wrong format")
+
+    payload = {"id_token": parts[1]}
+    url = autho_url + "/" + autho_tokeninfo
+    return HttpManager.Post(url, json=payload)
+
+def GetUserId(header):
+    info = GetUserInfo(header)
+
+    data = json.loads(info.text)
+    if 'user_id' in data:
+        return data['user_id']
+
+    raise KeyError("No `user_id` found")

@@ -44,9 +44,10 @@ def test_userGroups():
 #   Testing Users model
 #
 def test_users():
-    email = str(uuid.uuid4())
-    nickname = str(uuid.uuid4())
-    user = Users(group_id=DEFAULT_USER_GROUP, email=email, nickname=nickname, last_activity_date=datetime.datetime.utcnow())
+    guid = str(uuid.uuid4())
+    user_id = str(uuid.uuid4())
+    url = str(uuid.uuid4())
+    user = Users(group_id=DEFAULT_USER_GROUP, uuid=guid, user_id=user_id, cylon_url=url)
 
     # Make sure that we can save the group
     result = user.save()
@@ -58,10 +59,12 @@ def test_users():
 
     # Updating the model and trying to get it back
     user = result
-    new_email = str(uuid.uuid4())
-    new_nickname = str(uuid.uuid4())
-    user.email = new_email
-    user.nickname = new_nickname
+    new_guid = str(uuid.uuid4())
+    new_user_id = str(uuid.uuid4())
+    new_url = str(uuid.uuid4())
+    user.uuid = new_guid
+    user.user_id = new_user_id
+    user.cylon_url = new_url
     user.last_activity_date = datetime.datetime.utcnow()
     user.save()
     result = Users.get(Users.id == user.id)
