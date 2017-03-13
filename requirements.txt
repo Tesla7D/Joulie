@@ -6,6 +6,6 @@ eventlet
 Flask
 python-engineio
 python-socketio
-PyMySQL=0.7.9
+PyMySQL==0.7.9
 PyJWT
 flask-cors
