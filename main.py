@@ -97,6 +97,40 @@ def newUser():
     db.AddUser(user_id, url, guid)
     return "User Added"
 
+@app.route('/updateuser', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def updateUser():
+    data = request.get_json()
+    head = request.headers
+
+    user_id = GetUserId(head)
+    user = db.GetUser(user_id=user_id)
+
+    url = None
+    guid = None
+    if data:
+        if ('url' in data and
+            data['url']):
+
+            url = data['url']
+        if ('uuid' in data and
+            data['uuid']):
+
+            guid = data['uuid']
+
+    if user:
+        if guid:
+            user.uuid = guid
+        if url:
+            user.cylon_url = url
+
+        user.save()
+        return "User Updated"
+
+    db.AddUser(user_id, url, guid)
+    return "User Added"
+
 
 #
 # Device
@@ -106,7 +140,11 @@ def newUser():
 @requires_auth
 def addDevice(robot):
     data = request.get_json(force=True)
-    url = cylon_url + "/" + cylon_create_device.format(str(robot))
+    head = request.headers
+
+    user_id = GetUserId(head)
+    c_url = db.GetUser(user_id=user_id).cylon_url
+    url = c_url + "/" + cylon_create_device.format(str(robot))
 
     response = requests.post(url, data=data)
     return response.text
@@ -115,7 +153,12 @@ def addDevice(robot):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def removeDevice(robot, device):
-    return cylon.RemoveDevice(robot, device)
+    head = request.headers
+
+    user_id = GetUserId(head)
+    c_url = db.GetUser(user_id=user_id).cylon_url
+
+    return cylon.RemoveDevice(robot, device, c_url=c_url)
 
 @app.route('/robot_test/<uuid:robot>/device', methods=['POST'])
 def addDevice_test(robot):
@@ -137,13 +180,23 @@ def removeDevice_test(robot, device):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def addRobot(name):
-    return cylon.AddRobot(name)
+    head = request.headers
+
+    user_id = GetUserId(head)
+    c_url = db.GetUser(user_id=user_id).cylon_url
+
+    return cylon.AddRobot(name, c_url=c_url)
 
 @app.route('/robot/<string:name>', methods=['DELETE'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def removeRobot(name):
-    return cylon.RemoveRobot(name)
+    head = request.headers
+
+    user_id = GetUserId(head)
+    c_url = db.GetUser(user_id=user_id).cylon_url
+
+    return cylon.RemoveRobot(name, c_url=c_url)
 
 @app.route('/robot_test/<string:name>', methods=['POST'])
 def addRobot_test(name):
@@ -161,11 +214,13 @@ def removeRobot_test(name):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def deviceCommand(robot, device, command):
-    data = request.get_json(force=True)
-    url = cylon_url + "/" + cylon_command.format(str(robot), str(device), str(command))
+    data = request.get_json()
+    head = request.headers
 
-    response = requests.post(url, json=data)
-    return response.text
+    user_id = GetUserId(head)
+    c_url = db.GetUser(user_id=user_id).cylon_url
+
+    return cylon.RunCommand(robot, device, command, data, c_url=c_url)
 
 @app.route('/robot_test/<string:robot>/device/<string:device>/<string:command>', methods=['POST'])
 def deviceCommand_test(robot, device, command):
