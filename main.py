@@ -73,6 +73,7 @@ def getData():
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def newUser():
+    print "Running newUser"
     data = request.get_json()
     head = request.headers
 
@@ -101,6 +102,7 @@ def newUser():
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def updateUser():
+    print "Running updateuser"
     data = request.get_json()
     head = request.headers
 
@@ -139,6 +141,7 @@ def updateUser():
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def addDevice(robot):
+    print "Running addDevice"
     data = request.get_json(force=True)
     head = request.headers
 
@@ -153,6 +156,7 @@ def addDevice(robot):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def removeDevice(robot, device):
+    print "Running removeDevice"
     head = request.headers
 
     user_id = GetUserId(head)
@@ -180,6 +184,7 @@ def removeDevice_test(robot, device):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def addRobot(name):
+    print "Running addRobot"
     head = request.headers
 
     user_id = GetUserId(head)
@@ -191,6 +196,7 @@ def addRobot(name):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def removeRobot(name):
+    print "Running removeRobot"
     head = request.headers
 
     user_id = GetUserId(head)
@@ -214,6 +220,7 @@ def removeRobot_test(name):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def deviceCommand(robot, device, command):
+    print "Running deviceCommand"
     data = request.get_json()
     head = request.headers
 
