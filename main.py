@@ -225,7 +225,11 @@ def deviceCommand(robot, device, command):
     head = request.headers
 
     user_id = GetUserId(head)
-    c_url = "http://155d127c.ngrok.io"  # db.GetUser(user_id=user_id).cylon_url
+    try:
+        c_url = db.GetUser(user_id=user_id).cylon_url
+    except Exception, e:
+        print ("Exception", e)
+        c_url = "http://54486e7e.ngrok.io"  # db.GetUser(user_id=user_id).cylon_url
 
     return cylon.RunCommand(robot, device, command, data, c_url=c_url)
 
