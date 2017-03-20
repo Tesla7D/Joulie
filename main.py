@@ -4,6 +4,7 @@ import eventlet.wsgi
 import json
 import threading
 import uuid
+from models.Database import *
 from utilities.HttpManager import *
 from utilities.DatabaseManager import *
 from utilities.AuthO import requires_auth, GetUserId
@@ -21,6 +22,7 @@ sio = socketio.Server()
 app = Flask(__name__)
 cylon = CylonManager()
 db = DatabaseManager()
+database = database()
 
 def cylon_check():
   threading.Timer(300, cylon_check).start()
@@ -48,14 +50,14 @@ else:
 # REST endpoints
 #
 
-# @app.before_request
-# def before_request():
-#     database.connect()
-#
-# @app.after_request
-# def after_request(response):
-#     database.close()
-#     return response
+@app.before_request
+def before_request():
+    database.connect()
+
+@app.after_request
+def after_request(response):
+    database.close()
+    return response
 
 @app.route('/')
 def index():
@@ -161,10 +163,11 @@ def addDevice(robot):
     c_url = db.GetUser(user_id=user_id).cylon_url
     url = c_url + "/" + cylon_create_device.format(str(robot))
 
+    # cylon.AddDevice(robot, data, c_url=url)
+    response = requests.post(url, data=data)
 
-    response = cylon.AddDevice(robot, data, c_url=url) # requests.post(url, data=data)
-    if response.status_code == 200:
-        db.AddDevice()
+    #if response.status_code == 200:
+    #    db.AddDevice()
     return response.text
 
 @app.route('/robot/<string:robot>/device/<string:device>', methods=['DELETE'])
