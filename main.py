@@ -48,6 +48,15 @@ else:
 # REST endpoints
 #
 
+# @app.before_request
+# def before_request():
+#     database.connect()
+#
+# @app.after_request
+# def after_request(response):
+#     database.close()
+#     return response
+
 @app.route('/')
 def index():
     """Serve the client-side application."""
@@ -96,6 +105,7 @@ def newUser():
         return "User Updated"
 
     db.AddUser(user_id, url, guid)
+    cylon.AddRobot(guid, c_url=url)
     return "User Added"
 
 @app.route('/updateuser', methods=['POST'])
@@ -124,6 +134,7 @@ def updateUser():
     if user:
         if guid:
             user.uuid = guid
+            cylon.AddRobot(guid, c_url=url)
         if url:
             user.cylon_url = url
 
@@ -131,6 +142,7 @@ def updateUser():
         return "User Updated"
 
     db.AddUser(user_id, url, guid)
+    cylon.AddRobot(guid, c_url=url)
     return "User Added"
 
 
@@ -149,7 +161,10 @@ def addDevice(robot):
     c_url = db.GetUser(user_id=user_id).cylon_url
     url = c_url + "/" + cylon_create_device.format(str(robot))
 
-    response = requests.post(url, data=data)
+
+    response = cylon.AddDevice(robot, data, c_url=url) # requests.post(url, data=data)
+    if response.status_code == 200:
+        db.AddDevice()
     return response.text
 
 @app.route('/robot/<string:robot>/device/<string:device>', methods=['DELETE'])
@@ -229,7 +244,7 @@ def deviceCommand(robot, device, command):
         c_url = db.GetUser(user_id=user_id).cylon_url
     except Exception, e:
         print ("Exception", e)
-        c_url = "http://54486e7e.ngrok.io"  # db.GetUser(user_id=user_id).cylon_url
+        c_url = "http://3cba3bc3.ngrok.io"  # db.GetUser(user_id=user_id).cylon_url
 
     return cylon.RunCommand(robot, device, command, data, c_url=c_url)
 
