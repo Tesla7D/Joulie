@@ -28,6 +28,11 @@ class DatabaseManager(object):
 
         raise AttributeError("No parameters specified. Nothing was done")
 
+    def GetUsers(self):
+        users = Users.select()
+
+        return users
+
     def DeleteUser(self, id = None, uuid = None, user_id = None):
         user = self.GetUser(id=id, uuid=uuid, user_id=user_id)
         user.delete_instance()
@@ -72,8 +77,12 @@ class DatabaseManager(object):
 
         raise AttributeError("No parameters specified. Nothing was done")
 
-    def GetDevices(self, owner_id):
-        devices = Devices.select().where(Devices.owner_id == owner_id)
+    def GetDevices(self, owner_id=None):
+        if owner_id:
+            devices = Devices.select().where(Devices.owner_id == owner_id)
+        else:
+            devices = Devices.select()
+
         data = []
         counter = 0
 

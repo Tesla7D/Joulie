@@ -215,6 +215,59 @@ def getDevices():
     data = db.GetDevices(user.id)
     return json.dumps(data)
 
+@app.route('/devices/reset', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def resetDevices():
+    print "Resetting all devices"
+
+    users = db.GetUser()
+    for user in users:
+        c_url = user.cylon_url
+        robot = user.uuid
+        if not c_url or not robot:
+            continue
+
+        devices = db.GetDevices(user.id)
+        for device in devices:
+            data = device.creation_data
+            if not data:
+                continue
+
+            result = cylon.AddDevice(robot, data, c_url=c_url)
+            if result.status_code != 200:
+                print "Got error: " + result.text
+
+    return "Done"
+
+@app.route('/devices/reset/<string:user_id>', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def resetUserDevices(user_id):
+    print "Resetting user devices"
+
+    user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(500)
+
+    c_url = user.cylon_url
+    robot = user.uuid
+    if not c_url or not robot:
+        abort(500)
+
+    devices = db.GetDevices(user_id)
+    for device in devices:
+        # TODO: Fix creation data (Probably in DatabaseManager)
+        data = device.creation_data
+        if not data:
+            continue
+
+        result = cylon.AddDevice(robot, data, c_url=c_url)
+        if result.status_code != 200:
+            print "Got error: " + result.text
+
+    return "Done"
+
 @app.route('/device', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
@@ -279,6 +332,50 @@ def removeDevice_test(robot, device):
 #
 # Robot
 #
+@app.route('/robots/reset', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def resetRobots():
+    print "Resetting all robots"
+
+    users = db.GetUsers()
+    for user in users:
+        c_url = user.cylon_url
+        name = user.uuid
+        if not c_url or not name:
+            continue
+
+        result = cylon.GetRobot(name, c_url=c_url)
+        if result.status_code != 200:
+            result = cylon.AddRobot(name, c_url=c_url)
+            if result.status_code != 200:
+                print "Got error: " + result.text
+
+    return "Done"
+
+@app.route('/robots/reset/<string:user_id>', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def resetRobot(user_id):
+    print "Resetting robot"
+
+    user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(500)
+
+    c_url = user.cylon_url
+    name = user.uuid
+    if not c_url or not name:
+        abort(500)
+
+    result = cylon.GetRobot(name, c_url=c_url)
+    if result.status_code != 200:
+        result = cylon.AddRobot(name, c_url=c_url)
+        if result.status_code != 200:
+            print "Got error: " + result.text
+
+    return "Done"
+
 @app.route('/robot/<string:name>', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
