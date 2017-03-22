@@ -1,16 +1,15 @@
 import peewee
 import datetime
-import Database
+from Database import DatabaseModel
 
 DEFAULT_DEVICE = 42
 
 
-class Devices(peewee.Model):
+class Devices(DatabaseModel):
     type_id = peewee.IntegerField()
-    device_name = peewee.CharField()
     owner_id = peewee.IntegerField()
+    display_name = peewee.CharField()
+    uuid = peewee.CharField()
+    creation_data = peewee.CharField()
     creation_date = peewee.DateTimeField(default=datetime.datetime.utcnow)
-    last_activity_date = peewee.DateTimeField()
-
-    class Meta:
-        database = Database.database()
+    last_activity_date = peewee.DateTimeField(default=datetime.datetime.utcnow)

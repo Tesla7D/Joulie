@@ -122,7 +122,9 @@ def test_deviceTypes():
 #
 def test_devices():
     name = str(uuid.uuid4())
-    device = Devices(type_id=DEFAULT_DEVICE_TYPE, device_name=name, owner_id=DEFAULT_USER, last_activity_date=datetime.datetime.utcnow())
+    guid = str(uuid.uuid4())
+    data = str(uuid.uuid4())
+    device = Devices(type_id=DEFAULT_DEVICE_TYPE, owner_id=DEFAULT_USER, display_name=name, uuid=guid, creation_data=data)
 
     # Make sure that we can save the group
     result = device.save()
@@ -135,8 +137,14 @@ def test_devices():
     # Updating the model and trying to get it back
     device = result
     new_name = str(uuid.uuid4())
-    device.email = new_name
+    new_guid = str(uuid.uuid4())
+    new_data = str(uuid.uuid4())
+
+    device.display_name = new_name
+    device.uuid = new_guid
+    device.creation_data = new_data
     device.last_activity_date = datetime.datetime.utcnow()
+
     device.save()
     result = Devices.get(Devices.id == device.id)
     assert device.__eq__(result)
@@ -183,6 +191,39 @@ def test_accessLevels():
     # Now we should fail on trying to get the record back
     try:
         result = Access_Levels.get(Access_Levels.id == accessLevel.id)
+        assert False
+    except DoesNotExist:
+        assert True
+
+
+#
+#   Testing Device_Access model
+#
+def test_deviceAccess():
+    deviceAccess = Devices_Access.create(user=DEFAULT_USER, device=DEFAULT_DEVICE,
+                                         access_level=DEFAULT_ACCESS_LEVEL)
+
+    # Make sure that we can get the data back
+    result = Devices_Access.get(
+        Devices_Access.user == deviceAccess.user and Devices_Access.device == deviceAccess.device)
+    assert deviceAccess.__eq__(result)
+
+    # Updating the model and trying to get it back
+    deviceAccess = result
+    deviceAccess.access_level = BASIC_ACCESS_LEVEL
+    deviceAccess.save()
+    result = Devices_Access.get(
+        Devices_Access.user == deviceAccess.user and Devices_Access.device == deviceAccess.device)
+    assert deviceAccess.__eq__(result)
+
+    # Trying to delete record
+    result = result.delete_instance()
+    assert result == 1
+
+    # Now we should fail on getting the record back
+    try:
+        result = Devices_Access.get(
+            Devices_Access.user == deviceAccess.user and Devices_Access.device == deviceAccess.device)
         assert False
     except DoesNotExist:
         assert True
@@ -253,39 +294,6 @@ def test_energyTypes():
     # Now we should fail on trying to get the record back
     try:
         result = Energy_Types.get(Energy_Types.id == energyType.id)
-        assert False
-    except DoesNotExist:
-        assert True
-
-
-#
-#   Testing Device_Access model
-#
-def test_deviceAccess():
-    deviceAccess = Devices_Access(user_id=DEFAULT_USER, device_id=DEFAULT_DEVICE, access_level=DEFAULT_ACCESS_LEVEL)
-
-    # Make sure that we can save the group
-    result = deviceAccess.save()
-    assert result == 1
-
-    # Make sure that we can get the data back
-    result = Devices_Access.get(Devices_Access.id == deviceAccess.id)
-    assert deviceAccess.__eq__(result)
-
-    # Updating the model and trying to get it back
-    deviceAccess = result
-    deviceAccess.access_level = BASIC_ACCESS_LEVEL
-    deviceAccess.save()
-    result = Devices_Access.get(Devices_Access.id == deviceAccess.id)
-    assert deviceAccess.__eq__(result)
-
-    # Trying to delete record
-    result = result.delete_instance()
-    assert result == 1
-
-    # Now we should fail on getting the record back
-    try:
-        result = Devices_Access.get(Devices_Access.id == deviceAccess.id)
         assert False
     except DoesNotExist:
         assert True

@@ -102,8 +102,11 @@ def GetUserInfo(header):
     url = autho_url + "/" + autho_tokeninfo
     return HttpManager.Post(url, json=payload)
 
-def GetUserId(header):
-    info = GetUserInfo(header)
+def GetUserId(header, user=None):
+    if user:
+        info = user
+    else:
+        info = GetUserInfo(header)
 
     data = json.loads(info.text)
     if 'user_id' in data:

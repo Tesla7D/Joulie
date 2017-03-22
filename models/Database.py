@@ -35,7 +35,7 @@ db = MySQLDatabase(database=database, host=host, user=user, passwd=password)
 
 
 # Base class for the database
-class Database(peewee.Model):
+class DatabaseModel(peewee.Model):
     class Meta:
         database = db
 

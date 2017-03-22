@@ -7,7 +7,7 @@ import uuid
 from models.Database import *
 from utilities.HttpManager import *
 from utilities.DatabaseManager import *
-from utilities.AuthO import requires_auth, GetUserId
+from utilities.AuthO import requires_auth, GetUserId, GetUserInfo
 from flask import Flask, render_template, request
 from flask_cors import cross_origin
 
@@ -80,6 +80,28 @@ def getData():
 #
 # User
 #
+@app.route('/user', methods=['GET'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def getCurrentUser():
+    print "Getting current user info"
+    data = request.get_json()
+    head = request.headers
+
+    return GetUserInfo(head)
+
+@app.route('/user/<string:user_id>', methods=['GET'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def getUser(user_id):
+    return None
+
+@app.route('/finduser/<string:email>', methods=['GET'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def findUser(email):
+    return None
+
 @app.route('/newuser', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
@@ -100,6 +122,7 @@ def newUser():
     if user:
         if not user.uuid:
             user.uuid = guid
+            cylon.AddRobot(guid, c_url=url)
         if not user.cylon_url:
             user.cylon_url = url
 
@@ -151,7 +174,43 @@ def updateUser():
 #
 # Device
 #
-@app.route('/robot/<string:robot>/device', methods=['POST'])
+@app.route('/device/<string:name>', methods=['GET'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def getDevice(name):
+    print "Getting device"
+
+    device = db.GetDevice(uuid=name)
+    if not device:
+        return None
+
+    user = db.GetUser(id=device.owner_id)
+    owner_user_id = user.user_id if user else ""
+
+    data = {'display_name': device.display_name,
+            'uuid': device.uuid,
+            'owner_user_id': owner_user_id,
+            'type': device.type_id,
+            'creation_date': device.creation_date,
+            'last_activity_date': device.last_activity_date}
+    return json.dumps(data)
+
+
+@app.route('/devices', methods=['GET'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def getDevices():
+    print "Getting multiple devices"
+    head = request.headers
+
+    user_info = GetUserInfo(head)
+    user_id = GetUserId(head, user=user_info)
+    user = db.GetUser(user_id=user_id)
+
+    data = db.GetDevices(user.id)
+    return json.dumps(data)
+
+@app.route('/device', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def addDevice(robot):
@@ -160,25 +219,29 @@ def addDevice(robot):
     head = request.headers
 
     user_id = GetUserId(head)
-    c_url = db.GetUser(user_id=user_id).cylon_url
-    url = c_url + "/" + cylon_create_device.format(str(robot))
+    user = db.GetUser(user_id=user_id)
+    c_url = user.cylon_url
+    robot = user.uuid
 
-    # cylon.AddDevice(robot, data, c_url=url)
-    response = requests.post(url, data=data)
+    response = cylon.AddDevice(robot, data, c_url=c_url)
+    #url = c_url + "/" + cylon_create_device.format(str(robot))
+    #response = requests.post(url, data=data)
 
-    #if response.status_code == 200:
-    #    db.AddDevice()
+    if response.status_code == 200:
+       db.AddDevice()
     return response.text
 
-@app.route('/robot/<string:robot>/device/<string:device>', methods=['DELETE'])
+@app.route('/device/<string:device>', methods=['DELETE'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
-def removeDevice(robot, device):
+def removeDevice(device):
     print "Running removeDevice"
     head = request.headers
 
     user_id = GetUserId(head)
-    c_url = db.GetUser(user_id=user_id).cylon_url
+    user = db.GetUser(user_id=user_id)
+    c_url = user.cylon_url
+    robot = user.uuid
 
     return cylon.RemoveDevice(robot, device, c_url=c_url)
 
@@ -234,20 +297,18 @@ def removeRobot_test(name):
 #
 # Run Command
 #
-@app.route('/robot/<string:robot>/device/<string:device>/<string:command>', methods=['POST'])
+@app.route('/device/<string:device>/<string:command>', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
-def deviceCommand(robot, device, command):
+def deviceCommand(device, command):
     print "Running deviceCommand"
     data = request.get_json()
     head = request.headers
 
     user_id = GetUserId(head)
-    try:
-        c_url = db.GetUser(user_id=user_id).cylon_url
-    except Exception, e:
-        print ("Exception", e)
-        c_url = "http://3cba3bc3.ngrok.io"  # db.GetUser(user_id=user_id).cylon_url
+    user = db.GetUser(user_id=user_id)
+    c_url = user.cylon_url
+    robot = user.uuid
 
     return cylon.RunCommand(robot, device, command, data, c_url=c_url)
 

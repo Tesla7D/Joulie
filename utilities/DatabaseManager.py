@@ -1,10 +1,13 @@
-import datetime
-from models import Users, User_Groups
+from models import Users, Devices
 from peewee import DoesNotExist
 
 class DatabaseManager(object):
     def __init__(self):
         i = 0
+
+    #
+    # USER
+    #
 
     def AddUser(self, user_id, cylon_url, uuid):
         user = Users(group_id=2, user_id=user_id, cylon_url=cylon_url, uuid=uuid)
@@ -48,15 +51,66 @@ class DatabaseManager(object):
         user.save()
         return True
 
-    def CreateUser(self):
-        user = Users(group_id=2, email="test", nickname="nick ick", last_activity_date=datetime.datetime.utcnow())
-        user.save()
+    #
+    # DEVICES
+    #
+
+    def AddDevice(self, owner_id, display_name, uuid, creation_data):
+        device = Devices(type_id=2, owner_id=owner_id, display_name=display_name, uuid=uuid, creation_data=creation_data)
+        device.save()
+
+        return True
+
+    def GetDevice(self, id=None, uuid=None):
+        try:
+            if id:
+                return Devices.get(id == id)
+            if uuid:
+                return Devices.get(Users.uuid == uuid)
+        except DoesNotExist:
+            return None
+
+        raise AttributeError("No parameters specified. Nothing was done")
+
+    def GetDevices(self, owner_id):
+        devices = Devices.select().where(Devices.owner_id == owner_id)
+        data = {}
+        counter = 0
+
+        for device in devices:
+            device_data = {'display_name': device.display_name,
+                           'uuid': device.uuid,
+                           'owner_user_id': owner_id,
+                           'type': device.type_id,
+                           'creation_date': device.creation_date,
+                           'last_activity_date': device.last_activity_date}
+            data[counter] = device_data
+            counter += 1
+
+        return data
 
 
+    def DeleteDevice(self, id = None, uuid = None):
+        user = self.GetDevice(id=id, uuid=uuid)
+        user.delete_instance()
 
-    def AddUserGroup(self):
-        group = User_Groups(group_name="peewee")
-        group.save()
+        return True
 
-    def AddDevice(self):
-        return ""
+    def UpdateDevice(self, id, type_id = None, owner_id=None, display_name=None, uuid=None, creation_data=None, last_activity_date = None):
+        device = self.GetDevice(id=id)
+
+        if type_id:
+            device.type_id = type_id
+        if owner_id:
+            device.owner_id = owner_id
+        if uuid:
+            device.uuid = uuid
+        if creation_data:
+            device.creation_date = creation_data
+        if last_activity_date:
+            device.last_activity_date = last_activity_date
+        if display_name:
+            device.display_name = display_name
+
+        device.save()
+        return True

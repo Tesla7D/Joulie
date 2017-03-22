@@ -54,6 +54,13 @@ class CylonManager(HttpManager):
     def __init__(self):
          i = 0
 
+    def AddDevice(self, robot, data, c_url="https://joulie-cylon.herokuapp.com"):
+        url = c_url + "/" + \
+              self.cylon_robot.format(robot) + "/" + \
+              self.cylon_create_device
+
+        return HttpManager.Post(url, data=data)
+
     def GetDevice(self, robot, name, c_url="https://joulie-cylon.herokuapp.com"):
         url = c_url + "/" + \
               self.cylon_robot.format(robot) + "/" + \
