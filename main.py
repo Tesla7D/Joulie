@@ -8,7 +8,7 @@ from models.Database import *
 from utilities.HttpManager import *
 from utilities.DatabaseManager import *
 from utilities.AuthO import requires_auth, GetUserId, GetUserInfo
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, abort
 from flask_cors import cross_origin
 
 cylon_url = "https://joulie-cylon.herokuapp.com"
@@ -23,6 +23,7 @@ app = Flask(__name__)
 cylon = CylonManager()
 db = DatabaseManager()
 database = database()
+
 
 def cylon_check():
   threading.Timer(300, cylon_check).start()
@@ -88,7 +89,9 @@ def getCurrentUser():
     data = request.get_json()
     head = request.headers
 
-    return GetUserInfo(head)
+    user_info = GetUserInfo(head)
+
+    return user_info.text
 
 @app.route('/user/<string:user_id>', methods=['GET'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
@@ -191,8 +194,8 @@ def getDevice(name):
             'uuid': device.uuid,
             'owner_user_id': owner_user_id,
             'type': device.type_id,
-            'creation_date': device.creation_date,
-            'last_activity_date': device.last_activity_date}
+            'creation_date': str(device.creation_date),
+            'last_activity_date': str(device.last_activity_date)}
     return json.dumps(data)
 
 
@@ -206,6 +209,8 @@ def getDevices():
     user_info = GetUserInfo(head)
     user_id = GetUserId(head, user=user_info)
     user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(505)
 
     data = db.GetDevices(user.id)
     return json.dumps(data)
@@ -218,17 +223,27 @@ def addDevice(robot):
     data = request.get_json(force=True)
     head = request.headers
 
+    display_name = data['display_name'] if data['display_name'] else None
+    if not display_name:
+        abort(500)
+
     user_id = GetUserId(head)
     user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(500)
+
     c_url = user.cylon_url
     robot = user.uuid
+    guid = uuid.uuid4()
+    data['name'] = guid
 
     response = cylon.AddDevice(robot, data, c_url=c_url)
     #url = c_url + "/" + cylon_create_device.format(str(robot))
     #response = requests.post(url, data=data)
 
     if response.status_code == 200:
-       db.AddDevice()
+       db.AddDevice(user_id, display_name, guid, str(data))
+
     return response.text
 
 @app.route('/device/<string:device>', methods=['DELETE'])
@@ -240,6 +255,9 @@ def removeDevice(device):
 
     user_id = GetUserId(head)
     user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(500)
+
     c_url = user.cylon_url
     robot = user.uuid
 
@@ -307,10 +325,14 @@ def deviceCommand(device, command):
 
     user_id = GetUserId(head)
     user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(500)
+
     c_url = user.cylon_url
     robot = user.uuid
 
-    return cylon.RunCommand(robot, device, command, data, c_url=c_url)
+    result = cylon.RunCommand(robot, device, command, data, c_url=c_url)
+    return result.text
 
 @app.route('/robot_test/<string:robot>/device/<string:device>/<string:command>', methods=['POST'])
 def deviceCommand_test(robot, device, command):

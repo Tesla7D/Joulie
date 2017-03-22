@@ -18,7 +18,7 @@ class DatabaseManager(object):
     def GetUser(self, id = None, uuid = None, user_id = None):
         try:
             if id:
-                return Users.get(id == id)
+                return Users.get(Users.id == id)
             if uuid:
                 return Users.get(Users.uuid == uuid)
             if user_id:
@@ -64,9 +64,9 @@ class DatabaseManager(object):
     def GetDevice(self, id=None, uuid=None):
         try:
             if id:
-                return Devices.get(id == id)
+                return Devices.get(Devices.id == id)
             if uuid:
-                return Devices.get(Users.uuid == uuid)
+                return Devices.get(Devices.uuid == uuid)
         except DoesNotExist:
             return None
 
@@ -74,17 +74,17 @@ class DatabaseManager(object):
 
     def GetDevices(self, owner_id):
         devices = Devices.select().where(Devices.owner_id == owner_id)
-        data = {}
+        data = []
         counter = 0
 
         for device in devices:
             device_data = {'display_name': device.display_name,
                            'uuid': device.uuid,
-                           'owner_user_id': owner_id,
+                           'owner_user_id': 0,
                            'type': device.type_id,
-                           'creation_date': device.creation_date,
-                           'last_activity_date': device.last_activity_date}
-            data[counter] = device_data
+                           'creation_date': str(device.creation_date),
+                           'last_activity_date': str(device.last_activity_date)}
+            data.append(device_data)
             counter += 1
 
         return data
