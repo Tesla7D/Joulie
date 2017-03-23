@@ -1,4 +1,5 @@
 import os
+import ngrok
 import socketio
 import eventlet.wsgi
 import json
@@ -64,8 +65,26 @@ def after_request(response):
 
 @app.route('/')
 def index():
-    """Serve the client-side application."""
+    # Serve the client-side application
     return render_template('index.html')
+
+@app.route('/ngrok', methods=['GET'])
+def getNgrok():
+    if not is_local():
+        abort(503)
+
+    try:
+        tunnels = ngrok.client.get_tunnels()
+
+        for tunnel in tunnels:
+            if str.startswith(str(tunnel.public_url), "https"):
+                return str(tunnel.public_url)
+
+        abort(500)
+    except Exception, e:
+        print ("Got exception: " + str(e))
+        abort(500)
+
 
 @app.route('/data', methods=['GET'])
 def getData():

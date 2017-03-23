@@ -2,8 +2,10 @@ jwt
 peewee==2.8.5
 pytest
 requests
+greenlet
 eventlet
 Flask
+python-ngrok
 python-engineio
 python-socketio
 PyMySQL==0.7.9
