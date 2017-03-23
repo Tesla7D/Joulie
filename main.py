@@ -4,10 +4,12 @@ import eventlet.wsgi
 import json
 import threading
 import uuid
+
 from models.Database import *
 from utilities.HttpManager import *
 from utilities.DatabaseManager import *
 from utilities.AuthO import requires_auth, GetUserId, GetUserInfo
+from utilities.Package import is_local
 from flask import Flask, render_template, request, abort
 from flask_cors import cross_origin
 
