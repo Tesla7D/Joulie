@@ -18,7 +18,7 @@ if ('AUTHO_CLIENT_ID' in os.environ and
     client_id = os.environ.get('AUTHO_CLIENT_ID')
     client_secret = os.environ.get('AUTHO_CLIENT_SECRET')
 else:
-    workDir = os.getcwd()
+    workDir = os.path.dirname(os.path.realpath(__file__))
     index = workDir.rfind(dirName)
     if index == -1:
         raise Exception("Unknown workng directory: " + workDir)

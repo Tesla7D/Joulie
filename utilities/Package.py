@@ -4,14 +4,15 @@ import json
 is_local_server = False
 
 dirName = "Joulie"
+
+workDir = os.getcwd()
+index = workDir.rfind(dirName)
+if index == -1:
+    raise Exception("Unknown workng directory: " + workDir)
+
+workDir = workDir[:index + len(dirName)]
+    
 try:
-    workDir = os.getcwd()
-    index = workDir.rfind(dirName)
-    if index == -1:
-        raise Exception("Unknown workng directory: " + workDir)
-
-    workDir = workDir[:index + len(dirName)]
-
     with open(os.path.join(workDir, 'package.json')) as data_file:
         data = json.load(data_file)
 

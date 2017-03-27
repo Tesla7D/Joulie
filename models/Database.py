@@ -16,7 +16,7 @@ if ('MYSQL_DATABASE' in os.environ and
     user = os.environ.get('MYSQL_USER')
     password = os.environ.get('MYSQL_PASSWORD')
 else:
-    workDir = os.getcwd()
+    workDir = os.path.dirname(os.path.realpath(__file__))
     index = workDir.rfind(dirName)
     if index == -1:
         raise Exception("Unknown workng directory: " + workDir)
