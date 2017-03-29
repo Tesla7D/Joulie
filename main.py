@@ -6,7 +6,7 @@ import json
 import threading
 import uuid
 
-from models.Database import *
+from models.Database import database
 from utilities.HttpManager import *
 from utilities.DatabaseManager import *
 from utilities.AuthO import requires_auth, GetUserId, GetUserInfo
@@ -111,8 +111,14 @@ def getCurrentUser():
     head = request.headers
 
     user_info = GetUserInfo(head)
+    user_id = GetUserId(head, user_info)
+    user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(505)
 
-    return user_info.text
+    data = {'url': user.cylon_url}
+
+    return json.dumps(data)
 
 @app.route('/user/<string:user_id>', methods=['GET'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
@@ -137,17 +143,19 @@ def newUser():
     user_id = GetUserId(head)
     user = db.GetUser(user_id=user_id)
 
-    url = cylon_url
+    url = None
     if (data and
         'url' in data and
         data['url']):
         url = data['url']
     guid = str(uuid.uuid4())
+
     if user:
         if not user.uuid:
             user.uuid = guid
             cylon.AddRobot(guid, c_url=url)
-        if not user.cylon_url:
+        if (not user.cylon_url and
+            url):
             user.cylon_url = url
 
         user.save()
@@ -198,6 +206,10 @@ def updateUser():
 #
 # Device
 #
+
+#
+# Get info about device with specified uuid
+#
 @app.route('/device/<string:name>', methods=['GET'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
@@ -220,6 +232,9 @@ def getDevice(name):
     return json.dumps(data)
 
 
+#
+# Gets information about all devices for current user
+#
 @app.route('/devices', methods=['GET'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
@@ -233,10 +248,23 @@ def getDevices():
     if not user:
         abort(505)
 
-    data = db.GetDevices(user.id)
+    devices = db.GetDevices(user.id)
+    data = []
+    counter = 0
+
+    for device in devices:
+        device_data = {'display_name': device.display_name,
+                       'uuid': device.uuid,
+                       'type': device.type_id,
+                       'owned': 1,
+                       'creation_date': str(device.creation_date),
+                       'last_activity_date': str(device.last_activity_date)}
+        data.append(device_data)
+        counter += 1
+
     return json.dumps(data)
 
-@app.route('/devices/reset', methods=['POST'])
+@app.route('/user/current/devices/reset', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def resetDevices():
@@ -261,29 +289,53 @@ def resetDevices():
 
     return "Done"
 
-@app.route('/devices/reset/<string:user_id>', methods=['POST'])
+#
+# Resets all devices for selected user
+#
+
+
+@app.route('/robot/<string:robot>/devices/reset', methods=['POST'])
+def resetUserDevicesLocal(robot):
+    print "Resetting user devices"
+    if not is_local():
+        abort(503)
+
+    data = request.get_json(force=True)
+    result = cylon.AddDevice(robot, data)
+    if result.status_code != 200:
+        print "Got error: " + result.text
+
+    return "Done"
+
+
+@app.route('user/<string:user_id>/devices/reset', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def resetUserDevices(user_id):
     print "Resetting user devices"
+    if not is_local():
+        user = db.GetUser(user_id=user_id)
+        if not user:
+            abort(500)
 
-    user = db.GetUser(user_id=user_id)
-    if not user:
-        abort(500)
+        c_url = user.cylon_url
+        robot = user.uuid
+        if not c_url or not robot:
+            abort(500)
 
-    c_url = user.cylon_url
-    robot = user.uuid
-    if not c_url or not robot:
-        abort(500)
+        url = c_url + "/devices/reset/" + robot
+        devices = db.GetDevices(user_id)
+        for device in devices:
+            data = device.creation_data
+            if not data:
+                continue
 
-    devices = db.GetDevices(user_id)
-    for device in devices:
-        # TODO: Fix creation data (Probably in DatabaseManager)
-        data = device.creation_data
-        if not data:
-            continue
-
-        result = cylon.AddDevice(robot, data, c_url=c_url)
+            result = HttpManager.Post(url, json=data)
+            if result.status_code != 200:
+                print "Got error: " + result.text
+    else:
+        data = request.get_json(force=True)
+        result = cylon.AddDevice(user_id, data)
         if result.status_code != 200:
             print "Got error: " + result.text
 
@@ -292,7 +344,7 @@ def resetUserDevices(user_id):
 @app.route('/device', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
-def addDevice(robot):
+def addDevice():
     print "Running addDevice"
     data = request.get_json(force=True)
     head = request.headers
@@ -433,14 +485,38 @@ def removeRobot_test(name):
 #
 # Run Command
 #
+app.route('/robot/<string:robot>/device/<string:device>/<string:command>', methods=['POST'])
+def deviceCommandLocal(robot, device, command):
+    print "Running deviceCommand"
+    data = request.get_json()
+
+    if not is_local():
+        head = request.headers
+        user_id = GetUserId(head)
+        user = db.GetUser(user_id=user_id)
+        if not user:
+            abort(500)
+
+        c_url = user.cylon_url
+        url = c_url + "/robot/{}/device/{}/{}".format(robot, device, command)
+        result = HttpManager.Post(url, json=data)
+        return result.text
+
+    result = cylon.RunCommand(robot, device, command, data)
+
+    return result.text
+
 @app.route('/device/<string:device>/<string:command>', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def deviceCommand(device, command):
     print "Running deviceCommand"
     data = request.get_json()
-    head = request.headers
 
+    if is_local():
+        abort(503)
+
+    head = request.headers
     user_id = GetUserId(head)
     user = db.GetUser(user_id=user_id)
     if not user:
@@ -449,7 +525,8 @@ def deviceCommand(device, command):
     c_url = user.cylon_url
     robot = user.uuid
 
-    result = cylon.RunCommand(robot, device, command, data, c_url=c_url)
+    url = c_url + "/robot/{}/device/{}/{}".format(robot, device, command)
+    result = HttpManager.Post(url, json=data)
     return result.text
 
 @app.route('/robot_test/<string:robot>/device/<string:device>/<string:command>', methods=['POST'])

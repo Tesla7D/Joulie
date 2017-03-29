@@ -2,6 +2,7 @@ import jwt
 import os
 import json
 from utilities.HttpManager import HttpManager
+from utilities.Package import is_local
 from functools import wraps
 from flask import request, jsonify, _app_ctx_stack
 
@@ -37,9 +38,13 @@ def handle_error(error, status_code):
     resp.status_code = status_code
     return resp
 
+
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        if is_local():
+            return f(*args, **kwargs)
+
         auth = request.headers.get('Authorization', None)
         if not auth:
             return handle_error({'code': 'authorization_header_missing',
@@ -89,6 +94,7 @@ def requires_auth(f):
 
     return decorated
 
+
 def GetUserInfo(header):
     token = header.get('Authorization', None)
     if not token:
@@ -101,6 +107,7 @@ def GetUserInfo(header):
     payload = {"id_token": parts[1]}
     url = autho_url + "/" + autho_tokeninfo
     return HttpManager.Post(url, json=payload)
+
 
 def GetUserId(header, user=None):
     if user:

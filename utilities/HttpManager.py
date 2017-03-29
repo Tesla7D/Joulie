@@ -54,21 +54,21 @@ class CylonManager(HttpManager):
     def __init__(self):
          i = 0
 
-    def AddDevice(self, robot, data, c_url="https://joulie-cylon.herokuapp.com"):
+    def AddDevice(self, robot, data, c_url="http://localhost:3000"):
         url = c_url + "/" + \
               self.cylon_robot.format(robot) + "/" + \
               self.cylon_create_device
 
         return HttpManager.Post(url, data=data)
 
-    def GetDevice(self, robot, name, c_url="https://joulie-cylon.herokuapp.com"):
+    def GetDevice(self, robot, name, c_url="http://localhost:3000"):
         url = c_url + "/" + \
               self.cylon_robot.format(robot) + "/" + \
               self.cylon_device.format(name)
 
         return HttpManager.Get(url)
 
-    def RemoveDevice(self, robot, name, c_url="https://joulie-cylon.herokuapp.com"):
+    def RemoveDevice(self, robot, name, c_url="http://localhost:3000"):
         url = c_url + "/" + \
               self.cylon_robot.format(robot) + "/" + \
               self.cylon_remove_device
@@ -105,24 +105,24 @@ class CylonManager(HttpManager):
 
         return HttpManager.Post(url, json=data)
 
-    def GetRobot(self, name, c_url="https://joulie-cylon.herokuapp.com"):
+    def GetRobot(self, name, c_url="http://localhost:3000"):
         url = c_url + "/" + self.cylon_robot.format(name)
 
         return HttpManager.Get(url)
 
-    def AddRobot(self, name, c_url="https://joulie-cylon.herokuapp.com"):
+    def AddRobot(self, name, c_url="http://localhost:3000"):
         url = c_url + "/" + self.cylon_add_robot
 
         data = {'opts': {'name': name}}
         return HttpManager.Post(url, json=data)
 
-    def RemoveRobot(self, name, c_url="https://joulie-cylon.herokuapp.com"):
+    def RemoveRobot(self, name, c_url="http://localhost:3000"):
         url = c_url + "/" + self.cylon_remove_robot
 
         data = {'opts': {'name': name}}
         return HttpManager.Post(url, json=data)
 
-    def RunCommand(self, robot, device, command, data, c_url="https://joulie-cylon.herokuapp.com"):
+    def RunCommand(self, robot, device, command, data, c_url="http://localhost:3000"):
         url = c_url + "/" + \
               self.cylon_robot.format(robot) + "/" + \
               self.cylon_device.format(device) + "/" + \
