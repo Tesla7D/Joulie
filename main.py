@@ -33,7 +33,8 @@ def cylon_check():
   print "Calling Cylon..."
   response = requests.get(cylon_url)
 
-cylon_check()
+# No need to run cylon check anymore
+# cylon_check()
 
 # db = DatabaseManager.DatabaseManager()
 # db.AddUserGroup()
