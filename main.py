@@ -380,6 +380,9 @@ def addDevice(robot, user=None, data=None):
     guid = uuid.uuid4()
     data['name'] = guid
     response = cylon.AddDevice(robot, data)
+    if not response:
+        # no connection
+        abort(404)
 
     return handle_error(response.text, response.status_code)
 
@@ -569,6 +572,8 @@ def deviceCommandLocal(robot, device, command, user=None, data=None):
         return handle_error(result.text, result.status_code)
 
     result = cylon.RunCommand(robot, device, command, data)
+    if not result:
+        abort(404)
 
     return handle_error(result.text, result.status_code)
 

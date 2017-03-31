@@ -11,31 +11,39 @@ class HttpManager(object):
     def Post(url, data=None, json=None, headers=None):
         print "Doing POST to [{}]".format(url)
 
-        if json != None:
+        try:
+            if json != None:
+                if headers != None:
+                    return requests.post(url, json=json, headers=headers)
+
+                return requests.post(url, json=json)
+
             if headers != None:
-                return requests.post(url, json=json, headers=headers)
+                return requests.post(url, data=data, headers=headers)
 
-            return requests.post(url, json=json)
-
-        if headers != None:
-            return requests.post(url, data=data, headers=headers)
-
-        return requests.post(url, data=data)
+            return requests.post(url, data=data)
+        except ConnectionError, e:
+            print "Got exception: " + str(e)
+            return None
 
     @staticmethod
     def Get(url, data=None, json=None, headers=None):
         print "Doing GET to [{}]".format(url)
 
-        if json != None:
+        try:
+            if json != None:
+                if headers != None:
+                    return requests.get(url, json=json, headers=headers)
+
+                return requests.get(url, json=json)
+
             if headers != None:
-                return requests.get(url, json=json, headers=headers)
+                return requests.get(url, data=data, headers=headers)
 
-            return requests.get(url, json=json)
-
-        if headers != None:
-            return requests.get(url, data=data, headers=headers)
-
-        return requests.get(url, data=data)
+            return requests.get(url, data=data)
+        except ConnectionError, e:
+            print "Got exception: " + str(e)
+            return None
 
 
 #
@@ -109,11 +117,7 @@ class CylonManager(HttpManager):
     def GetRobot(self, name, c_url="http://localhost:3000"):
         url = c_url + "/" + self.cylon_robot.format(name)
 
-        try:
-            return HttpManager.Get(url)
-        except ConnectionError, e:
-            print "Got exception: " + str(e)
-            return None
+        return HttpManager.Get(url)
 
     def AddRobot(self, name, c_url="http://localhost:3000"):
         url = c_url + "/" + self.cylon_add_robot
