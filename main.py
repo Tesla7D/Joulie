@@ -372,7 +372,7 @@ def addDevice(robot, user=None, data=None):
             abort(500)
 
         url = c_url + "/robot/{}/device".format(robot)
-        response = HttpManager.Post(url, data)
+        response = HttpManager.Post(url, json=data)
 
         return handle_error(response.text, response.status_code)
 
@@ -448,6 +448,8 @@ def removeDevice(device):
 @requires_auth
 def resetUserRobots():
     print "Resetting all robots"
+    if is_local():
+        abort(503)
 
     users = db.GetUsers()
     for user in users:
@@ -489,6 +491,10 @@ def resetRobot(robot):
     # code for local version
     if is_local():
         result = cylon.GetRobot(robot)
+        if not result:
+            # no connection
+            abort(404)
+
         if result.status_code != 200:
             result = cylon.AddRobot(robot)
             if result.status_code != 200:

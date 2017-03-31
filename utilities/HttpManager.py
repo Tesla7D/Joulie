@@ -1,4 +1,5 @@
 import requests
+from requests import ConnectionError
 
 
 #
@@ -108,7 +109,11 @@ class CylonManager(HttpManager):
     def GetRobot(self, name, c_url="http://localhost:3000"):
         url = c_url + "/" + self.cylon_robot.format(name)
 
-        return HttpManager.Get(url)
+        try:
+            return HttpManager.Get(url)
+        except ConnectionError, e:
+            print "Got exception: " + str(e)
+            return None
 
     def AddRobot(self, name, c_url="http://localhost:3000"):
         url = c_url + "/" + self.cylon_add_robot
