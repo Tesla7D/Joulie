@@ -67,7 +67,7 @@ def after_request(response):
 def index():
     # Serve the client-side application
     # return render_template('index.html')
-    return True
+    return 'true'
 
 
 def currentNgrok():
