@@ -28,10 +28,14 @@ db = DatabaseManager()
 database = database()
 
 
+def rules_check():
+    threading.Timer(300, rules_check).start()
+
+
 def cylon_check():
-  threading.Timer(300, cylon_check).start()
-  print "Calling Cylon..."
-  response = requests.get(cylon_url)
+    threading.Timer(300, cylon_check).start()
+    print "Calling Cylon..."
+    response = requests.get(cylon_url)
 
 # No need to run cylon check anymore
 # cylon_check()
@@ -374,6 +378,7 @@ def addDevice(robot, user=None, data=None):
 
         url = c_url + "/robot/{}/device".format(robot)
         response = HttpManager.Post(url, json=data)
+        print "Got response from server-core. \nCode: {}\nMessage: {}".format(response.status_code, response.text)
 
         return handle_error(response.text, response.status_code)
 
@@ -384,6 +389,8 @@ def addDevice(robot, user=None, data=None):
     if not response:
         # no connection
         abort(404)
+
+    print "Got response from cylon. \nCode: {}\nMessage: {}".format(response.status_code, response.text)
 
     return handle_error(response.text, response.status_code)
 
@@ -412,6 +419,7 @@ def addUserDevice():
 
     robot = user.uuid
     response = addDevice(robot, user, data)
+    print "Got response from addDevice. \nCode: {}\nMessage: {}".format(response.status_code, response.text)
 
     if response.status_code == 200:
         payload = response.text
