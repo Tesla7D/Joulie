@@ -81,7 +81,7 @@ class CylonManager(HttpManager):
         url = c_url + "/" + \
               self.cylon_robot.format(robot) + "/" + \
               self.cylon_remove_device
-        data = {'opts': {'name': name}}
+        data = {'name': name}
 
         return HttpManager.Post(url, json=data)
 
@@ -122,13 +122,13 @@ class CylonManager(HttpManager):
     def AddRobot(self, name, c_url="http://localhost:3000"):
         url = c_url + "/" + self.cylon_add_robot
 
-        data = {'opts': {'name': name}}
+        data = {'name': name}
         return HttpManager.Post(url, json=data)
 
     def RemoveRobot(self, name, c_url="http://localhost:3000"):
         url = c_url + "/" + self.cylon_remove_robot
 
-        data = {'opts': {'name': name}}
+        data = {'name': name}
         return HttpManager.Post(url, json=data)
 
     def RunCommand(self, robot, device, command, data, c_url="http://localhost:3000"):
