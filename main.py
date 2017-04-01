@@ -401,11 +401,13 @@ def addUserDevice():
 
     display_name = data['display_name'] if 'display_name' in data else None
     if not display_name:
+        print "No display name"
         abort(500)
 
     user_id = GetUserId(head)
     user = db.GetUser(user_id=user_id)
     if not user:
+        print "No user found"
         abort(500)
 
     robot = user.uuid
@@ -496,21 +498,17 @@ def resetRobot(robot):
     if is_local():
         print "Checking local robot"
         result = cylon.GetRobot(robot)
-        if not result:
-            # no connection
-            print "No result"
-            abort(404)
+        if (result and
+            result.status_code == 200):
+            return "Already exists"
 
         print "Checked robot and got {} back".format(result.status_code)
+        result = cylon.AddRobot(robot)
         if result.status_code != 200:
-            result = cylon.AddRobot(robot)
-            if result.status_code != 200:
-                print "Got error: " + result.text
-                abort(result.status_code)
+            print "Got error: " + result.text
+            abort(result.status_code)
 
-            return result.text
-
-        return "Already exists"
+        return result.text
 
     # code for remote version
     user = db.GetUser(uuid=robot)
