@@ -494,11 +494,14 @@ def resetRobot(robot):
 
     # code for local version
     if is_local():
+        print "Checking local robot"
         result = cylon.GetRobot(robot)
         if not result:
             # no connection
+            print "No result"
             abort(404)
 
+        print "Checked robot and got {} back".format(result.status_code)
         if result.status_code != 200:
             result = cylon.AddRobot(robot)
             if result.status_code != 200:
