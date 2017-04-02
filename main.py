@@ -73,7 +73,9 @@ def index():
     # Serve the client-side application
     # return render_template('index.html')
 
-    return 'true'
+    return handle_error('test', int('200'))
+
+    #return 'true'
 
 
 def currentNgrok():
@@ -119,7 +121,6 @@ def getData():
 @requires_auth
 def getCurrentUser():
     print "Getting current user info"
-    data = request.get_json()
     head = request.headers
 
     user_info = GetUserInfo(head)
@@ -215,9 +216,113 @@ def updateUser():
     return "User Added"
 
 
+@app.route('/syncuser/<string:user_id>', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def syncUser(user_id):
+    print "Syncing user data"
+
+    if is_local():
+        abort(503)
+
+    user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(503)
+
+    url = user.cylon_url + "/db/user/{}".format(user.user_id)
+    data = {'uuid': user.uuid}
+    HttpManager.Post(url, json=data)
+
+    devices = db.GetDevices(user.id)
+    for device in devices:
+        url = user.cylon_url + "/db/device/{}".format(device.uuid)
+        data = {'display_name': device.display_name,
+                'auth_id': user_id,
+                'creation_data': device.creation_data}
+        HttpManager.Post(url, json=data)
+
+    return 'Done'
+
+@app.route('/db/user/<string:user_id>', methods=['POST'])
+def dbUser(user_id):
+    print "Running DB user"
+
+    if not is_local():
+        abort(503)
+
+    data = request.get_json()
+    guid = None
+    if data:
+        if ('uuid' in data and
+            data['uuid']):
+
+            guid = data['uuid']
+
+    user = db.GetUser(user_id=user_id)
+    if not user:
+        db.AddUser(user_id, 'localhost', guid)
+        return 'Added new user'
+
+    if guid:
+        user.uuid = guid
+
+    user.save()
+    return 'User updated'
+
 #
 # Device
 #
+
+
+@app.route('/db/device/<string:guid>', methods=['POST'])
+def dbDevice(guid):
+    print "Running DB device"
+
+    if not is_local():
+        abort(503)
+
+    data = request.get_json()
+    display_name = None
+    owner = None
+    creation_data = None
+    if data:
+        if ('display_name' in data and
+            data['display_name']):
+
+            display_name = data['display_name']
+
+        if ('auth_id' in data and
+            data['auth_id']):
+
+            auth_id = data['auth_id']
+            owner = db.GetUser(user_id=auth_id)
+
+        if ('creation_data' in data and
+            data['creation_data']):
+
+            creation_data = data['creation_data']
+
+    device = db.GetDevice(uuid=guid)
+    if not device:
+        if not owner:
+            return 'Cannot add device: no owner'
+
+        if not creation_data:
+            return 'Cannot add device: no creation data'
+
+        db.AddDevice(owner.id, display_name, guid, creation_data)
+        return 'Added new device'
+
+    if display_name:
+        device.display_name = display_name
+    if owner:
+        device.owner_id = owner.id
+    if creation_data:
+        device.creation_data = creation_data
+
+    device.save()
+    return 'Device updated'
+
 
 #
 # Get info about device with specified uuid
@@ -360,7 +465,7 @@ def resetUserDevices(user_id):
 def addDevice(robot, user=None, data=None):
     print "Running addDevice"
     if not data:
-        data = request.get_json(force=True)
+        data = request.get_json()
 
     # code for remote version
     if not is_local():
@@ -389,8 +494,11 @@ def addDevice(robot, user=None, data=None):
         abort(404)
 
     print "Got response from cylon. \nCode: {}\nMessage: {}".format(response.status_code, response.text)
+    if response.status_code != 200:
+        print "Got {} back instead of 200".format(response.status_code)
+        abort(503)
 
-    return handle_error(response.text, int(response.status_code))
+    return response.text
 
 
 @app.route('/device', methods=['POST'])
