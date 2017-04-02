@@ -508,7 +508,7 @@ def addDevice(robot, user=None, data=None):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def addUserDevice():
-    print "Running addDevice"
+    print "Running user addDevice"
     if is_local():
         abort(503)
 
