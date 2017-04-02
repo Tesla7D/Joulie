@@ -531,6 +531,7 @@ def addUserDevice():
     print "Got response from addDevice. \nCode: {}\nMessage: {}".format(response.status_code, response.text)
 
     if response.status_code == 200:
+        print "Got 200, trying to add device"
         payload = response.text
         success = payload['success'] if 'success' in payload else None
         if success != "true":
@@ -541,7 +542,8 @@ def addUserDevice():
         if not name:
             abort(503)
 
-        db.AddDevice(user_id, display_name, name, str(data))
+        print "Adding device to db"
+        db.AddDevice(user.id, display_name, name, str(data))
     else:
         print "Got {} back instead of 200".format(response.status_code)
         abort(503)
