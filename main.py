@@ -482,8 +482,11 @@ def addDevice(robot, user=None, data=None):
         url = c_url + "/robot/{}/device".format(robot)
         response = HttpManager.Post(url, json=data)
         print "Got response from server-core. \nCode: {}\nMessage: {}".format(response.status_code, response.text)
+        if response.status_code != 200:
+            print "Got {} back instead of 200".format(response.status_code)
+            abort(503)
 
-        return handle_error(response.text, int(response.status_code))
+        return response.text
 
     # code for local version
     guid = uuid.uuid4()
@@ -539,8 +542,11 @@ def addUserDevice():
             abort(503)
 
         db.AddDevice(user_id, display_name, name, str(data))
+    else:
+        print "Got {} back instead of 200".format(response.status_code)
+        abort(503)
 
-    return handle_error(response.data, response.status_code)
+    return response.text
 
 @app.route('/device/<string:device>', methods=['DELETE'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
