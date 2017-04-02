@@ -528,27 +528,23 @@ def addUserDevice():
 
     robot = user.uuid
     response = addDevice(robot, user, data)
-    print "Got response from addDevice. \nCode: {}\nMessage: {}".format(response.status_code, response.text)
+    print "Got response from addDevice.\nMessage: {}".format(response)
 
-    if response.status_code == 200:
-        print "Got 200, trying to add device"
-        payload = response.text
-        success = payload['success'] if 'success' in payload else None
-        if success != "true":
-            abort(500)
+    payload = response
+    success = payload['success'] if 'success' in payload else None
+    if success != "true":
+        print "Success = {}".format(success)
+        abort(500)
 
-        result = payload['result'] if 'result' in payload else None
-        name = result['name'] if (result and 'name' in result) else None
-        if not name:
-            abort(503)
-
-        print "Adding device to db"
-        db.AddDevice(user.id, display_name, name, str(data))
-    else:
-        print "Got {} back instead of 200".format(response.status_code)
+    result = payload['result'] if 'result' in payload else None
+    name = result['name'] if (result and 'name' in result) else None
+    if not name:
         abort(503)
 
-    return response.text
+    print "Adding device to db"
+    db.AddDevice(user.id, display_name, name, str(data))
+
+    return response
 
 @app.route('/device/<string:device>', methods=['DELETE'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
