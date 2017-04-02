@@ -530,7 +530,7 @@ def addUserDevice():
     response = addDevice(robot, user, data)
     print "Got response from addDevice.\nMessage: {}".format(response)
 
-    payload = response
+    payload = json.loads(response)
     success = payload['success'] if 'success' in payload else None
     if success != "true":
         print "Success = {}".format(success)
