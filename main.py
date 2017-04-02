@@ -72,6 +72,7 @@ def after_request(response):
 def index():
     # Serve the client-side application
     # return render_template('index.html')
+
     return 'true'
 
 
@@ -369,9 +370,6 @@ def addDevice(robot, user=None, data=None):
             user_id = GetUserId(head)
             user = db.GetUser(user_id=user_id)
 
-        if not user:
-            abort(500)
-
         c_url = user.cylon_url
         if not c_url:
             abort(500)
@@ -380,7 +378,7 @@ def addDevice(robot, user=None, data=None):
         response = HttpManager.Post(url, json=data)
         print "Got response from server-core. \nCode: {}\nMessage: {}".format(response.status_code, response.text)
 
-        return handle_error(response.text, response.status_code)
+        return handle_error(response.text, int(response.status_code))
 
     # code for local version
     guid = uuid.uuid4()
@@ -392,7 +390,7 @@ def addDevice(robot, user=None, data=None):
 
     print "Got response from cylon. \nCode: {}\nMessage: {}".format(response.status_code, response.text)
 
-    return handle_error(response.text, response.status_code)
+    return handle_error(response.text, int(response.status_code))
 
 
 @app.route('/device', methods=['POST'])
@@ -569,9 +567,12 @@ def deviceCommandLocal(robot, device, command, user=None, data=None):
 
     if not is_local():
         if not user:
-            head = request.headers
-            user_id = GetUserId(head)
-            user = db.GetUser(user_id=user_id)
+            device_info = db.GetDevice(uuid=device)
+            if not device_info:
+                abort(503)
+
+            owner_id = device_info.owner_id
+            user = db.GetUser(id=owner_id)
 
         if not user:
             abort(500)
@@ -597,6 +598,15 @@ def deviceCommand(device, command):
 
     if is_local():
         abort(503)
+
+    # device_info = db.GetDevice(uuid=device)
+    # if not device_info:
+    #     abort(503)
+    #
+    # owner_id = device_info.owner_id
+    # user = db.GetUser(id=owner_id)
+    # if not user:
+    #     abort(500)
 
     head = request.headers
     user_id = GetUserId(head)
