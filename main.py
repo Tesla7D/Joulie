@@ -518,13 +518,13 @@ def addUserDevice():
     display_name = data['display_name'] if 'display_name' in data else None
     if not display_name:
         print "No display name"
-        abort(500)
+        abort(503)
 
     user_id = GetUserId(head)
     user = db.GetUser(user_id=user_id)
     if not user:
         print "No user found"
-        abort(500)
+        abort(503)
 
     robot = user.uuid
     response = addDevice(robot, user, data)
@@ -532,9 +532,9 @@ def addUserDevice():
 
     payload = json.loads(response)
     success = payload['success'] if 'success' in payload else None
-    if success != "true":
+    if not success:
         print "Success = {}".format(success)
-        abort(500)
+        abort(503)
 
     result = payload['result'] if 'result' in payload else None
     name = result['name'] if (result and 'name' in result) else None
