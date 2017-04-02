@@ -544,7 +544,12 @@ def addUserDevice():
     print "Adding device to db"
     db.AddDevice(user.id, display_name, name, str(data))
 
-    return response
+    device = getDevice(name)
+    if not device:
+        print "Found no device"
+        abort(503)
+
+    return json.dumps(device)
 
 @app.route('/device/<string:device>', methods=['DELETE'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
