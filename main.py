@@ -693,10 +693,11 @@ def removeRobot(name):
 @app.route('/robot/<string:robot>/device/<string:device>/<string:command>', methods=['POST'])
 @requires_auth
 def deviceCommandLocal(robot, device, command, user=None, data=None):
-    print "Running deviceCommand"
+    print "Running deviceCommandLocal"
     if not data:
         data = request.get_json()
 
+    # code for the cloud
     if not is_local():
         if not user:
             device_info = db.GetDevice(uuid=device)
@@ -714,19 +715,23 @@ def deviceCommandLocal(robot, device, command, user=None, data=None):
         c_url = user.cylon_url
         url = c_url + "/robot/{}/device/{}/{}".format(robot, device, command)
         result = HttpManager.Post(url, json=data)
+        print "Got response from server-core. \nCode: {}\nMessage: {}".format(result.status_code, result.text)
+
         if result.status_code != 200:
             print "Status code {} instead of 200".format(result.status_code)
             abort(503)
 
         return result.text
 
+    # code for local version
     result = cylon.RunCommand(robot, device, command, data)
     if not result:
         print "No result from cylon"
         abort(404)
 
+    print "Got response from cylon. \nCode: {}\nMessage: {}".format(result.status_code, result.text)
+
     if result.status_code != 200:
-        print "Status code {} instead of 200".format(result.status_code)
         abort(503)
 
     return result.text
