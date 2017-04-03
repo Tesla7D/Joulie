@@ -747,18 +747,12 @@ def deviceCommand(device, command):
     if is_local():
         abort(503)
 
-    # device_info = db.GetDevice(uuid=device)
-    # if not device_info:
-    #     abort(503)
-    #
-    # owner_id = device_info.owner_id
-    # user = db.GetUser(id=owner_id)
-    # if not user:
-    #     abort(500)
+    device_info = db.GetDevice(uuid=device)
+    if not device_info:
+        abort(503)
 
-    head = request.headers
-    user_id = GetUserId(head)
-    user = db.GetUser(user_id=user_id)
+    owner_id = device_info.owner_id
+    user = db.GetUser(id=owner_id)
     if not user:
         abort(500)
 
