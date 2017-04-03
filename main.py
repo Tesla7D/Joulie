@@ -1,14 +1,18 @@
+import datetime
 import os
 import ngrok
 import socketio
 import eventlet.wsgi
 import json
 import threading
+import time
 import uuid
 
 from models.Database import database
+from sortedcontainers import SortedList
 from utilities.HttpManager import *
 from utilities.DatabaseManager import *
+from utilities.RulesManager import *
 from utilities.AuthO import handle_error, requires_auth, GetUserId, GetUserInfo
 from utilities.Package import is_local
 from flask import Flask, render_template, request, abort
@@ -26,6 +30,19 @@ app = Flask(__name__)
 cylon = CylonManager()
 db = DatabaseManager()
 database = database()
+rules = SortedList()
+
+rule_1 = Rule(uuid.uuid4(), 1, time.time(), 0)
+rule_2 = Rule(uuid.uuid4(), 2, time.time(), 0)
+rule_3 = Rule(uuid.uuid4(), 3, time.time(), 0)
+
+rules.add(rule_1)
+rules.add(rule_3)
+rules.add(rule_2)
+
+item = rules[0]
+item = rules[1]
+item = rules[2]
 
 
 def rules_check():
@@ -381,7 +398,7 @@ def getDevices():
 
     return json.dumps(data)
 
-@app.route('/user/current/devices/reset', methods=['POST'])
+@app.route('/user/all/devices/reset', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def resetDevices():
@@ -409,8 +426,6 @@ def resetDevices():
 #
 # Resets all devices for selected user
 #
-
-
 @app.route('/robot/<string:robot>/devices/reset', methods=['POST'])
 @requires_auth
 def resetUserDevicesLocal(robot):
@@ -418,7 +433,7 @@ def resetUserDevicesLocal(robot):
     if not is_local():
         abort(503)
 
-    data = request.get_json(force=True)
+    data = request.get_json()
     result = cylon.AddDevice(robot, data)
     if result.status_code != 200:
         print "Got error: " + result.text
@@ -441,7 +456,7 @@ def resetUserDevices(user_id):
         if not c_url or not robot:
             abort(500)
 
-        url = c_url + "/devices/reset/" + robot
+        url = c_url + "/robot/{}/devices/reset".format(robot)
         devices = db.GetDevices(user_id)
         for device in devices:
             data = device.creation_data
