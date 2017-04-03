@@ -50,19 +50,22 @@ rule_3 = Rule(uuid.uuid4(), 3, time.time(), 0)
 
 def rules_check():
     threading.Timer(60, rules_check).start()
-    with app.app_context():
-        now = time.time()
-        while len(rules) > 0 and rules[0].time < now:
-            current = rules[0]
-            # run rule
-            if current.state == 1:
-                data = json.loads(cylon_on_command)
-            else:
-                data = json.loads(cylon_off_command)
+    now = time.time()
+    while len(rules) > 0 and rules[0].time < now:
+        current = rules[0]
+        # run rule
+        if current.state == 1:
+            data = json.loads(cylon_on_command)
+        else:
+            data = json.loads(cylon_off_command)
 
-            deviceCommand(current.device, cylon_power_command, data)
+        url = "http://localhost:8000/device/{}/{}".format(current.device, cylon_power_command)
+        result = HttpManager.Post(url, json=data)
 
-            rules.__delitem__(0)
+        # with app.app_context():
+        #     deviceCommand(current.device, cylon_power_command, data)
+
+        rules.__delitem__(0)
 
 rules_check()
 
