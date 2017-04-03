@@ -24,6 +24,9 @@ cylon_remove_device = "api/robots/{}/commands/remove_device"
 cylon_add_robot = "api/commands/create_robot"
 cylon_remove_robot = "api/commands/remove_robot"
 cylon_command = "api/robots/{}/devices/{}/commands/{}"
+cylon_power_command = "set_power_state"
+cylon_on_command = "{\"State\": \"1\"}"
+cylon_off_command = "{\"State\": \"0\"}"
 
 sio = socketio.Server()
 app = Flask(__name__)
@@ -36,17 +39,24 @@ rule_1 = Rule(uuid.uuid4(), 1, time.time(), 0)
 rule_2 = Rule(uuid.uuid4(), 2, time.time(), 0)
 rule_3 = Rule(uuid.uuid4(), 3, time.time(), 0)
 
-rules.add(rule_1)
-rules.add(rule_3)
-rules.add(rule_2)
-
-item = rules[0]
-item = rules[1]
-item = rules[2]
+# rules.add(rule_1)
+# rules.add(rule_3)
+# rules.add(rule_2)
+#
+# item = rules[0]
+# item = rules[1]
+# item = rules[2]
 
 
 def rules_check():
-    threading.Timer(300, rules_check).start()
+    threading.Timer(60, rules_check).start()
+    now = time.time()
+    while len(rules) > 0 and rules[0].time < now:
+        current = rules[0]
+        # run rule
+        deviceCommand(current.device, "set_power_state")
+
+        rules.__delitem__(0)
 
 
 def cylon_check():
@@ -244,6 +254,7 @@ def syncUser(user_id):
 
     user = db.GetUser(user_id=user_id)
     if not user:
+        print "No user"
         abort(503)
 
     url = user.cylon_url + "/db/user/{}".format(user.user_id)
@@ -740,9 +751,10 @@ def deviceCommandLocal(robot, device, command, user=None, data=None):
 @app.route('/device/<string:device>/<string:command>', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
-def deviceCommand(device, command):
+def deviceCommand(device, command, data=None):
     print "Running deviceCommand"
-    data = request.get_json()
+    if not data:
+        data = request.get_json()
 
     if is_local():
         abort(503)
