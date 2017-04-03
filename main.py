@@ -54,9 +54,16 @@ def rules_check():
     while len(rules) > 0 and rules[0].time < now:
         current = rules[0]
         # run rule
-        deviceCommand(current.device, "set_power_state")
+        if current.state == 1:
+            data = json.loads(cylon_on_command)
+        else:
+            data = json.loads(cylon_off_command)
+
+        deviceCommand(current.device, cylon_power_command, data)
 
         rules.__delitem__(0)
+
+rules_check()
 
 
 def cylon_check():
@@ -100,9 +107,7 @@ def index():
     # Serve the client-side application
     # return render_template('index.html')
 
-    return handle_error('test', int('200'))
-
-    #return 'true'
+    return 'true'
 
 
 def currentNgrok():
@@ -125,6 +130,37 @@ def getNgrok():
         abort(503)
 
     return ngrok
+
+
+@app.route('/devie/<string:device>/rule', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def addRule(device, data=None):
+    print "Running addRule"
+    if not data:
+        data = request.get_json()
+
+    state = None
+    run_time = None
+    repeat = None
+    if data:
+        if ('state' in data and
+                data['state']):
+            state = data['state']
+        if ('run_time' in data and
+                data['run_time']):
+            run_time = data['run_time']
+        if ('repeat' in data and
+                data['repeat']):
+            repeat = data['repeat']
+
+    if not state or not run_time:
+        print "No state or run time"
+        abort(503)
+
+    rules.add(Rule(device, int(state), int(run_time), 0))
+
+    return "Done"
 
 
 @app.route('/data', methods=['GET'])
