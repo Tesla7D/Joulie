@@ -701,24 +701,35 @@ def deviceCommandLocal(robot, device, command, user=None, data=None):
         if not user:
             device_info = db.GetDevice(uuid=device)
             if not device_info:
+                print "No device info"
                 abort(503)
 
             owner_id = device_info.owner_id
             user = db.GetUser(id=owner_id)
 
         if not user:
+            print "No user"
             abort(500)
 
         c_url = user.cylon_url
         url = c_url + "/robot/{}/device/{}/{}".format(robot, device, command)
         result = HttpManager.Post(url, json=data)
-        return handle_error(result.text, result.status_code)
+        if result.status_code != 200:
+            print "Status code {} instead of 200".format(result.status_code)
+            abort(503)
+
+        return result.text
 
     result = cylon.RunCommand(robot, device, command, data)
     if not result:
+        print "No result from cylon"
         abort(404)
 
-    return handle_error(result.text, result.status_code)
+    if result.status_code != 200:
+        print "Status code {} instead of 200".format(result.status_code)
+        abort(503)
+
+    return result.text
 
 
 @app.route('/device/<string:device>/<string:command>', methods=['POST'])
@@ -749,7 +760,7 @@ def deviceCommand(device, command):
     robot = user.uuid
 
     result = deviceCommandLocal(robot, device, command, user, data)
-    return handle_error(result.data, result.status_code)
+    return result
 
 
 #
