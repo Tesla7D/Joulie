@@ -1,3 +1,4 @@
+sortedcontainers
 jwt
 peewee==2.8.5
 pytest
