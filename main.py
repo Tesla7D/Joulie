@@ -857,8 +857,6 @@ def deviceCommand(device, command, data=None):
 # Energy Usage
 #
 @app.route('/device/<string:device>/usage', methods=['POST'])
-@cross_origin(headers=['Content-Type', 'Authorization'])
-@requires_auth
 def addEnergyUsage(device):
     print "Running addEnergyUsage"
 
