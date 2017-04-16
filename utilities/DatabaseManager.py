@@ -1,4 +1,4 @@
-from models import Users, Devices
+from models import Users, Devices, Rules, Energy_Logs
 from peewee import DoesNotExist
 
 class DatabaseManager(object):
@@ -107,4 +107,24 @@ class DatabaseManager(object):
             device.display_name = display_name
 
         device.save()
+        return True
+
+    #
+    # RULES
+    #
+
+    def AddRule(self, run_time, run_repeat, state, owner_id, device_id):
+        rule = Rules(type_id=2, device_id=device_id, owner_id=owner_id, state=state, run_time=run_time, run_repeat=run_repeat)
+        rule.save()
+
+        return True
+
+    #
+    # ENERGY LOGS
+    #
+
+    def AddEnergyLog(self, device_id, value, metadata=None):
+        energyLog = Energy_Logs(type_id=2, device_id=device_id, energy_value=value, metadata=metadata)
+        energyLog.save()
+
         return True

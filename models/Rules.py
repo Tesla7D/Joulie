@@ -5,7 +5,7 @@ from Database import DatabaseModel
 DEFAULT_TYPE = 2
 
 
-class Devices(DatabaseModel):
+class Rules(DatabaseModel):
     type_id = peewee.IntegerField()
     device_id = peewee.IntegerField()
     owner_id = peewee.IntegerField()

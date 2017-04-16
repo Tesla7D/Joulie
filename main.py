@@ -18,6 +18,7 @@ from utilities.Package import is_local
 from flask import Flask, render_template, request, abort
 from flask_cors import cross_origin
 
+joulie_url = "https://joulie-core.herokuapp.com"
 cylon_url = "https://joulie-cylon.herokuapp.com"
 cylon_create_device = "api/robots/{}/commands/create_device"
 cylon_remove_device = "api/robots/{}/commands/remove_device"
@@ -136,14 +137,26 @@ def getNgrok():
     return ngrok
 
 
-@app.route('/devie/<string:device>/rule', methods=['POST'])
+@app.route('/user/<string:user_id>/device/<string:device_id>/rule', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
-def addRule(device, data=None):
-    print "Running addRule"
+def addUserRule(user_id, device_id, data=None, user=None, device=None):
+    print "Running addUserRule"
     if not data:
         data = request.get_json()
 
+    if not is_local():
+        if not user:
+            user = db.GetUser(user_id=user_id)
+        if not user:
+            abort(503)
+
+        if not device:
+            device = db.GetDevice(uuid=device_id)
+        if not device:
+            abort(503)
+
+    # TODO : Check this method
     state = None
     run_time = None
     repeat = None
@@ -162,7 +175,34 @@ def addRule(device, data=None):
         print "No state or run time"
         abort(503)
 
-    rules.add(Rule(device, int(state), int(run_time), 0))
+    rules.add(Rule(device_id, int(state), int(run_time), 0))
+
+
+@app.route('/device/<string:device_id>/rule', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def addRule(device_id, data=None):
+    print "Running addRule"
+    if not data:
+        data = request.get_json()
+
+    if is_local():
+        abort(503)
+
+    head = request.headers
+    user_id = GetUserId(head)
+    user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(503)
+
+    device = db.GetDevice(uuid=device_id)
+    if not device:
+        abort(503)
+
+    result = addUserRule(user_id, device_id, data, user, device)
+
+    # TODO : Finish addRule
+    #db.AddRule(int(run_time), 0, int(state),)
 
     return "Done"
 
@@ -508,7 +548,7 @@ def resetUserDevices(user_id):
             abort(500)
 
         url = c_url + "/robot/{}/devices/reset".format(robot)
-        devices = db.GetDevices(user_id)
+        devices = db.GetDevices(user.id)
         for device in devices:
             data = device.creation_data
             if not data:
@@ -814,6 +854,41 @@ def deviceCommand(device, command, data=None):
 
 
 #
+# Energy Usage
+#
+@app.route('/device/<string:device>/usage', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def addEnergyUsage(device):
+    print "Running addEnergyUsage"
+
+    if is_local():
+        abort(503)
+
+    device_info = db.GetDevice(uuid=device)
+    if not device_info:
+        print "No device found"
+        abort(503)
+
+    data = request.get_json()
+    value = None
+    metadata = None
+    if data:
+        if ('value' in data and
+                data['value']):
+            value = data['value']
+        if ('metadata' in data and
+                data['metadata']):
+            metadata = data['metadata']
+    if not value:
+        print "Value not found"
+        abort(503)
+
+    db.AddEnergyLog(device_info.id, value, metadata)
+
+    return "Done"
+
+#
 # Socket.io endpoints
 #
 
@@ -835,6 +910,44 @@ def message(sid, data):
 @sio.on('data publish', namespace='/api')
 def on_data(sid, data):
     print('got data ', data, " from ", sid)
+
+    try:
+        data = json.loads(data)
+    except Exception, e:
+        print "Got exception"
+        print e
+        return
+
+    if not data:
+        return
+
+    device_id = None
+    value = None
+    metadata = None
+    if ('kw' in data and
+            data['kw']):
+        value = data['kw']
+    if ('uuid' in data and
+            data['uuid']):
+        device_id = data['uuid']
+
+    json_data = {"value": value, "metadata": metadata}
+    url = joulie_url + "/device/{}/usage".format(device_id)
+    result = HttpManager.Post(url, json=json_data)
+    if (not result or
+            result.status_code != 200):
+        device_info = db.GetDevice(uuid=device_id)
+        if not device_info:
+            print "No device found"
+            abort(503)
+
+        try:
+            db.AddEnergyLog(device_info.id, value, metadata)
+        except Exception, e:
+            print "Got exception:"
+            print e
+    else:
+        return
 
 if __name__ == '__main__':
     # wrap Flask application with engineio's middleware
