@@ -566,7 +566,7 @@ def resetUserDevices(user_id):
             except Exception, e:
                 print "Got exception:"
                 print e
-                abort(503)
+                continue
 
             result = HttpManager.Post(url, json=data)
             if result.status_code != 200:
@@ -662,7 +662,14 @@ def addUserDevice():
         abort(503)
 
     print "Adding device to db"
-    db.AddDevice(user.id, display_name, name, str(data))
+    try:
+        data_json = json.dumps(data)
+    except Exception, e:
+        print "Got exception"
+        print e
+        abort(503)
+
+    db.AddDevice(user.id, display_name, name, data_json)
 
     device = getDevice(name)
     if not device:
@@ -894,6 +901,7 @@ def addEnergyUsage(device):
             metadata = data['metadata']
     if not value:
         print "Value not found"
+        print data
         abort(503)
 
     db.AddEnergyLog(device_info.id, value, metadata)
@@ -945,6 +953,9 @@ def on_data(sid, data):
 
     json_data = {"value": value, "metadata": metadata}
     url = joulie_url + "/device/{}/usage".format(device_id)
+
+    print "Sending data"
+    print json_data
     result = HttpManager.Post(url, json=json_data)
     if (not result or
             result.status_code != 200):
