@@ -128,3 +128,6 @@ class DatabaseManager(object):
         energyLog.save()
 
         return True
+
+    def GetEnergyLogs(self, device_id):
+        return Energy_Logs.select().where(Energy_Logs.device_id == device_id)

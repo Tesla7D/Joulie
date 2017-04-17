@@ -1,3 +1,4 @@
+import calendar
 import datetime
 import os
 import ngrok
@@ -207,8 +208,10 @@ def addRule(device_id, data=None):
     return "Done"
 
 
-@app.route('/data', methods=['GET'])
-def getData():
+@app.route('/user/current/data', methods=['GET'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def getCurrentUserData():
     data = {
             "point1": {"timestamp": "201702121140", "value": "50"}
             , "point2": {"timestamp": "201702121150", "value": "20"}
@@ -216,6 +219,33 @@ def getData():
             , "point4": {"timestamp": "201702121210", "value": "40"}
             , "point5": {"timestamp": "201702121220", "value": "75"}
             }
+
+    print "Getting current user usage data"
+    head = request.headers
+
+    user_info = GetUserInfo(head)
+    user_id = GetUserId(head, user_info)
+    user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(505)
+
+    devices = db.GetDevices(user.id)
+    data = []
+
+    for device in devices:
+        energy_logs = db.GetEnergyLogs(device.id)
+
+        if len(energy_logs) < 1:
+            continue
+
+        usage_data = []
+        for energy in energy_logs:
+            timestamp = calendar.timegm(energy.creation_date.timetuple())
+            usage_data.append({'value': energy.energy_value,
+                               'timestamp': timestamp})
+
+        data.append({'device': device.uuid,
+                     'usage': usage_data})
 
     return json.dumps(data)
 
