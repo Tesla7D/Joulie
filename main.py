@@ -508,6 +508,13 @@ def resetDevices():
             if not data:
                 continue
 
+            try:
+                data = json.loads(data)
+            except Exception, e:
+                print "Got exception:"
+                print e
+                abort(503)
+
             result = cylon.AddDevice(robot, data, c_url=c_url)
             if result.status_code != 200:
                 print "Got error: " + result.text
@@ -553,6 +560,13 @@ def resetUserDevices(user_id):
             data = device.creation_data
             if not data:
                 continue
+
+            try:
+                data = json.loads(data)
+            except Exception, e:
+                print "Got exception:"
+                print e
+                abort(503)
 
             result = HttpManager.Post(url, json=data)
             if result.status_code != 200:
