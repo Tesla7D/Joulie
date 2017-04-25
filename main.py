@@ -753,10 +753,10 @@ def addUserDevice():
 
     print "Doing database sync"
 
-    url = user.cylon_url + "/db/device/{}".format(device.uuid)
-    data = {'display_name': device.display_name,
+    url = user.cylon_url + "/db/device/{}".format(name)
+    data = {'display_name': display_name,
             'auth_id': user_id,
-            'creation_data': device.creation_data,
+            'creation_data': data_json,
             'device_type': type_id}
     HttpManager.Post(url, json=data)
 
