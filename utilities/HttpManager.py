@@ -12,13 +12,13 @@ class HttpManager(object):
         print "Doing POST to [{}]".format(url)
 
         try:
-            if json != None:
-                if headers != None:
+            if json:
+                if headers:
                     return requests.post(url, json=json, headers=headers)
 
                 return requests.post(url, json=json)
 
-            if headers != None:
+            if headers:
                 return requests.post(url, data=data, headers=headers)
 
             return requests.post(url, data=data)
@@ -31,13 +31,13 @@ class HttpManager(object):
         print "Doing GET to [{}]".format(url)
 
         try:
-            if json != None:
-                if headers != None:
+            if json:
+                if headers:
                     return requests.get(url, json=json, headers=headers)
 
                 return requests.get(url, json=json)
 
-            if headers != None:
+            if headers:
                 return requests.get(url, data=data, headers=headers)
 
             return requests.get(url, data=data)
