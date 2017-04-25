@@ -138,7 +138,7 @@ class DatabaseManager(object):
 
     def GetDeviceAccess(self, device, user):
         try:
-            return Devices_Access.get(Devices_Access.user == user and Devices_Access.device == device)
+            return Devices_Access.get((Devices_Access.user == user) & (Devices_Access.device == device))
         except DoesNotExist:
             return None
 

@@ -769,7 +769,7 @@ def shareDevice(device_id, user_id):
 
     result = db.AddDeviceAccess(device, user)
 
-    return result
+    return str(result)
 
 #
 # Robot
