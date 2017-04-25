@@ -1,4 +1,4 @@
-from models import Users, Devices, Rules, Energy_Logs
+from models import Users, Devices, Rules, Energy_Logs, Devices_Access
 from peewee import DoesNotExist
 
 class DatabaseManager(object):
@@ -131,3 +131,36 @@ class DatabaseManager(object):
 
     def GetEnergyLogs(self, device_id):
         return Energy_Logs.select().where(Energy_Logs.device_id == device_id)
+
+    #
+    # DEVICE ACCESS
+    #
+
+    def GetDeviceAccess(self, device, user):
+        try:
+            return Devices_Access.get(Devices_Access.user == user and Devices_Access.device == device)
+        except DoesNotExist:
+            return None
+
+    def GetSharedDevices(self, user):
+        try:
+            return Devices_Access.select().where(Devices_Access.user == user)
+        except DoesNotExist:
+            return None
+
+    def AddDeviceAccess(self, device, user, level=2):
+        if self.GetDeviceAccess(device, user):
+            return False
+
+        deviceAccess = Devices_Access(device=device, user=user, access_level=level)
+        result = deviceAccess.save(force_insert=True)
+
+        return result == 1
+
+    def DeleteDeviceAccess(self, device, user):
+        deviceAccess = self.GetDeviceAccess(device, user)
+        if not deviceAccess:
+            return False
+
+        deviceAccess.delete_instance()
+        return True

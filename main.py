@@ -37,18 +37,6 @@ db = DatabaseManager()
 database = database()
 rules = SortedList()
 
-rule_1 = Rule(uuid.uuid4(), 1, time.time(), 0)
-rule_2 = Rule(uuid.uuid4(), 2, time.time(), 0)
-rule_3 = Rule(uuid.uuid4(), 3, time.time(), 0)
-
-# rules.add(rule_1)
-# rules.add(rule_3)
-# rules.add(rule_2)
-#
-# item = rules[0]
-# item = rules[1]
-# item = rules[2]
-
 
 def rules_check():
     threading.Timer(60, rules_check).start()
@@ -212,14 +200,6 @@ def addRule(device_id, data=None):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def getCurrentUserData():
-    data = {
-            "point1": {"timestamp": "201702121140", "value": "50"}
-            , "point2": {"timestamp": "201702121150", "value": "20"}
-            , "point3": {"timestamp": "201702121200", "value": "30"}
-            , "point4": {"timestamp": "201702121210", "value": "40"}
-            , "point5": {"timestamp": "201702121220", "value": "75"}
-            }
-
     print "Getting current user usage data"
     head = request.headers
 
@@ -235,6 +215,23 @@ def getCurrentUserData():
     for device in devices:
         energy_logs = db.GetEnergyLogs(device.id)
 
+        if len(energy_logs) < 1:
+            continue
+
+        usage_data = []
+        for energy in energy_logs:
+            timestamp = calendar.timegm(energy.creation_date.timetuple())
+            usage_data.append({'value': energy.energy_value,
+                               'timestamp': timestamp})
+
+        data.append({'device': device.uuid,
+                     'usage': usage_data})
+
+    sharedDevices = db.GetSharedDevices(user)
+    for sharedDevice in sharedDevices:
+        device = sharedDevice.device
+
+        energy_logs = db.GetEnergyLogs(device.id)
         if len(energy_logs) < 1:
             continue
 
@@ -419,6 +416,10 @@ def dbDevice(guid):
     if not is_local():
         abort(503)
 
+    if not guid:
+        print "No uuid"
+        abort(503)
+
     data = request.get_json()
     display_name = None
     owner = None
@@ -505,7 +506,6 @@ def getDevices():
 
     devices = db.GetDevices(user.id)
     data = []
-    counter = 0
 
     for device in devices:
         device_data = {'display_name': device.display_name,
@@ -515,7 +515,17 @@ def getDevices():
                        'creation_date': str(device.creation_date),
                        'last_activity_date': str(device.last_activity_date)}
         data.append(device_data)
-        counter += 1
+
+    sharedDevices = db.GetSharedDevices(user)
+    for sharedDevice in sharedDevices:
+        device = sharedDevice.device
+        device_data = {'display_name': device.display_name,
+                       'uuid': device.uuid,
+                       'type': device.type_id,
+                       'owned': 0,
+                       'creation_date': str(device.creation_date),
+                       'last_activity_date': str(device.last_activity_date)}
+        data.append(device_data)
 
     return json.dumps(data)
 
@@ -699,6 +709,7 @@ def addUserDevice():
         print e
         abort(503)
 
+    data_json['name'] = name
     db.AddDevice(user.id, display_name, name, data_json)
 
     device = getDevice(name)
@@ -706,6 +717,8 @@ def addUserDevice():
         print "Found no device"
         abort(503)
 
+    url = joulie_url + "/syncuser/{}".format(user_id)
+    HttpManager.Post(url, headers=head)
     return json.dumps(device)
 
 @app.route('/device/<string:device>', methods=['DELETE'])
@@ -725,6 +738,38 @@ def removeDevice(device):
 
     return cylon.RemoveDevice(robot, device, c_url=c_url)
 
+
+@app.route('/device/<string:device_id>/share/<string:user_id>', methods=['POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def shareDevice(device_id, user_id):
+    print "Trying to share device"
+
+    device = db.GetDevice(uuid=device_id)
+    if not device:
+        print "No device found"
+        abort(503)
+
+    user = db.GetUser(user_id=user_id)
+    if not user:
+        print "No user found"
+        abort(503)
+
+    head = request.headers
+
+    user_id = GetUserId(head)
+    local_user = db.GetUser(user_id=user_id)
+    if not local_user:
+        print "Cannot find local user"
+        abort(503)
+
+    if device.owner_id != local_user.id:
+        print "Not an owner"
+        abort(401)
+
+    result = db.AddDeviceAccess(device, user)
+
+    return result
 
 #
 # Robot
@@ -897,6 +942,14 @@ def deviceCommand(device, command, data=None):
     if not user:
         print "No user"
         abort(500)
+
+    head = request.headers
+    user_id = GetUserId(head)
+    current_user = db.GetUser(user_id=user_id)
+    if owner_id != current_user:
+        if not db.GetDeviceAccess(device_info, current_user):
+            print "No access for current user"
+            abort(401)
 
     robot = user.uuid
 

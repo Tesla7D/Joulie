@@ -68,7 +68,7 @@ class CylonManager(HttpManager):
               self.cylon_robot.format(robot) + "/" + \
               self.cylon_create_device
 
-        return HttpManager.Post(url, json=data)
+        return HttpManager.Post(url, data=data)
 
     def GetDevice(self, robot, name, c_url="http://localhost:3000"):
         url = c_url + "/" + \
