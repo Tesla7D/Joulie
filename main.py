@@ -703,13 +703,13 @@ def addUserDevice():
 
     print "Adding device to db"
     try:
+        data['name'] = name
         data_json = json.dumps(data)
     except Exception, e:
         print "Got exception"
         print e
         abort(503)
 
-    data_json['name'] = name
     db.AddDevice(user.id, display_name, name, data_json)
 
     device = getDevice(name)
