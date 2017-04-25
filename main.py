@@ -424,6 +424,7 @@ def dbDevice(guid):
     display_name = None
     owner = None
     creation_data = None
+    device_type = None
     if data:
         if ('display_name' in data and
             data['display_name']):
@@ -441,6 +442,11 @@ def dbDevice(guid):
 
             creation_data = data['creation_data']
 
+        if ('device_type' in data and
+            data['device_type']):
+
+            device_type = data['device_type']
+
     device = db.GetDevice(uuid=guid)
     if not device:
         if not owner:
@@ -449,7 +455,7 @@ def dbDevice(guid):
         if not creation_data:
             return 'Cannot add device: no creation data'
 
-        db.AddDevice(owner.id, display_name, guid, creation_data)
+        db.AddDevice(owner.id, display_name, guid, creation_data, device_type)
         return 'Added new device'
 
     if display_name:
@@ -458,6 +464,8 @@ def dbDevice(guid):
         device.owner_id = owner.id
     if creation_data:
         device.creation_data = creation_data
+    if device_type:
+        device.type_id = device_type
 
     device.save()
     return 'Device updated'
@@ -508,9 +516,15 @@ def getDevices():
     data = []
 
     for device in devices:
+        device_type = "none"
+        if device.type_id == 742:
+            device_type = "wemo"
+        elif device.type_id == 752:
+            device_type = "tplink"
+
         device_data = {'display_name': device.display_name,
                        'uuid': device.uuid,
-                       'type': device.type_id,
+                       'type': device_type,
                        'owned': 1,
                        'creation_date': str(device.creation_date),
                        'last_activity_date': str(device.last_activity_date)}
@@ -519,9 +533,16 @@ def getDevices():
     sharedDevices = db.GetSharedDevices(user)
     for sharedDevice in sharedDevices:
         device = sharedDevice.device
+
+        device_type = "none"
+        if device.type_id == 742:
+            device_type = "wemo"
+        elif device.type_id == 752:
+            device_type = "tplink"
+
         device_data = {'display_name': device.display_name,
                        'uuid': device.uuid,
-                       'type': device.type_id,
+                       'type': device_type,
                        'owned': 0,
                        'creation_date': str(device.creation_date),
                        'last_activity_date': str(device.last_activity_date)}
@@ -701,6 +722,10 @@ def addUserDevice():
     if not name:
         abort(503)
 
+    device_type = result['type'] if (result and 'type' in result) else None
+    if not device_type:
+        abort(503)
+
     print "Adding device to db"
     try:
         data['name'] = name
@@ -710,7 +735,13 @@ def addUserDevice():
         print e
         abort(503)
 
-    db.AddDevice(user.id, display_name, name, data_json)
+    type_id = 2
+    if device_type == "wemo":
+        type_id = 742
+    elif device_type == "tplink":
+        type_id = 752
+
+    db.AddDevice(user.id, display_name, name, data_json, type_id)
 
     device = getDevice(name)
     if not device:
@@ -722,9 +753,10 @@ def addUserDevice():
     url = user.cylon_url + "/db/device/{}".format(device.uuid)
     data = {'display_name': device.display_name,
             'auth_id': user_id,
-            'creation_data': device.creation_data}
+            'creation_data': device.creation_data,
+            'device_type': type_id}
     HttpManager.Post(url, json=data)
-    
+
     print "Sync done"
 
     return json.dumps(device)

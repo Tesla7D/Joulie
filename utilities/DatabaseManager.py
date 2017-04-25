@@ -60,8 +60,8 @@ class DatabaseManager(object):
     # DEVICES
     #
 
-    def AddDevice(self, owner_id, display_name, uuid, creation_data):
-        device = Devices(type_id=2, owner_id=owner_id, display_name=display_name, uuid=uuid, creation_data=creation_data)
+    def AddDevice(self, owner_id, display_name, uuid, creation_data, type_id=2):
+        device = Devices(type_id=type_id, owner_id=owner_id, display_name=display_name, uuid=uuid, creation_data=creation_data)
         device.save()
 
         return True
