@@ -658,6 +658,7 @@ def addDevice(robot, user=None, data=None):
 
         c_url = user.cylon_url
         if not c_url:
+            print "No user url"
             abort(500)
 
         url = c_url + "/robot/{}/device".format(robot)
@@ -720,10 +721,12 @@ def addUserDevice():
     result = payload['result'] if 'result' in payload else None
     name = result['name'] if (result and 'name' in result) else None
     if not name:
+        print "No device name"
         abort(503)
 
-    device_type = result['type'] if (result and 'type' in result) else None
+    device_type = data['type'] if (data and 'type' in data) else None
     if not device_type:
+        print "No device type"
         abort(503)
 
     print "Adding device to db"
