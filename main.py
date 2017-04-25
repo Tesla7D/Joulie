@@ -717,8 +717,16 @@ def addUserDevice():
         print "Found no device"
         abort(503)
 
-    url = joulie_url + "/syncuser/{}".format(user_id)
-    HttpManager.Post(url, headers=head)
+    print "Doing database sync"
+
+    url = user.cylon_url + "/db/device/{}".format(device.uuid)
+    data = {'display_name': device.display_name,
+            'auth_id': user_id,
+            'creation_data': device.creation_data}
+    HttpManager.Post(url, json=data)
+    
+    print "Sync done"
+
     return json.dumps(device)
 
 @app.route('/device/<string:device>', methods=['DELETE'])
