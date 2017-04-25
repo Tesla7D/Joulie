@@ -762,7 +762,7 @@ def addUserDevice():
 
     print "Sync done"
 
-    return json.dumps(device)
+    return device
 
 @app.route('/device/<string:device>', methods=['DELETE'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
