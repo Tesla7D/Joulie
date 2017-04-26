@@ -28,7 +28,7 @@ class Rule(object):
         if rule_time < 0 or rule_time > 2359:
             raise Exception("Wrong time value: {}".format(rule_time))
 
-        if not repeat or repeat > 255 or repeat < -1:
+        if (not repeat and repeat != 0) or repeat > 255 or repeat < -1:
             raise Exception("Wrong repeat value: {}".format(repeat))
 
         if repeat == 0:
@@ -89,3 +89,7 @@ class Rule(object):
             guid = uuid.uuid4()
 
         return Rule(device, int(state), calendar.timegm(rule_date.timetuple()), 0, guid, rule_time)
+
+    @staticmethod
+    def _create_minutes(device, rule_time, state, guid=None):
+        return None

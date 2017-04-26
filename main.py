@@ -44,7 +44,7 @@ def start_rules():
     local_rules = db.GetRules()
     for rule in local_rules:
         device = db.GetDevice(id=rule.device_id)
-        rules.add(Rule.create(device.uuid, rule.run_time, rule.state, rule.run_repeat, rule.uuid))
+        rules.add(Rule.create(device.uuid, int(rule.run_time), int(rule.state), int(rule.run_repeat), rule.uuid))
 
 
 def rules_check():
@@ -52,6 +52,7 @@ def rules_check():
     now = time.time()
     while len(rules) > 0 and rules[0].time < now:
         current = rules[0]
+        print "Running rule {}".format(current.uuid)
 
         # check if rule needs to be deleted
         if current.uuid in rules_for_delete:
@@ -223,13 +224,13 @@ def addUserRule(user_id, device_id, data=None, user=None, device=None):
     if data:
         if ('state' in data and
                 data['state']):
-            state = data['state']
+            state = int(data['state'])
         if ('run_time' in data and
                 (data['run_time'] or data['run_time'] == 0)):
-            run_time = data['run_time']
+            run_time = int(data['run_time'])
         if ('repeat' in data and
                 (data['repeat'] or data['repeat'] == 0)):
-            repeat = data['repeat']
+            repeat = int(data['repeat'])
         if ('uuid' in data and
                 data['uuid']):
             guid = data['uuid']
@@ -242,7 +243,11 @@ def addUserRule(user_id, device_id, data=None, user=None, device=None):
     db.AddRule(run_time, repeat, state, user.id, device.id, guid)
     print "Rule added to db"
 
-    rules.add(Rule.create(device_id, run_time, state, repeat, guid))
+    try:
+        rules.add(Rule.create(device_id, run_time, state, repeat, guid))
+    except Exception, e:
+        print "Got exception:"
+        print e
 
     return "Done"
 
