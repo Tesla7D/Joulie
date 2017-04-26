@@ -262,7 +262,6 @@ def addRule(device_id, data=None):
         abort(503)
 
     db.AddRule(run_time, repeat, state, user.id, device.id, guid)
-    db.AddRule(int(run_time), 0, int(state),)
 
     return "Done"
 
