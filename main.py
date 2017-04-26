@@ -153,6 +153,38 @@ def getNgrok():
     return ngrok
 
 
+#
+# Rules
+#
+@app.route('/rules', methods=['GET'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def getRules():
+    print "Getting rules"
+    head = request.headers
+
+    user_info = GetUserInfo(head)
+    user_id = GetUserId(head, user=user_info)
+    user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(505)
+
+    user_rules = db.GetRules(user.id)
+    data = []
+
+    for user_rule in user_rules:
+        device = db.GetDevice(id=user_rule.device_id)
+
+        rule_data = {'state': user_rule.state,
+                     'time': user_rule.run_time,
+                     'repeat': user_rule.run_repeat,
+                     'uuid': user_rule.uuid,
+                     'device_id': device.uuid,
+                     'creation_date': str(device.creation_date)}
+        data.append(rule_data)
+
+    return json.dumps(data)
+
 @app.route('/user/<string:user_id>/device/<string:device_id>/rule', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
