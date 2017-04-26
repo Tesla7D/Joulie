@@ -28,6 +28,9 @@ class Rule(object):
         if rule_time < 0 or rule_time > 2359:
             raise Exception("Wrong time value: {}".format(rule_time))
 
+        if not repeat or repeat > 255 or repeat < -1:
+            raise Exception("Wrong repeat value: {}".format(repeat))
+
         if repeat == 0:
             return Rule._create_single(device, rule_time, state, guid)
 

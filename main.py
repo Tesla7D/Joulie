@@ -225,10 +225,10 @@ def addUserRule(user_id, device_id, data=None, user=None, device=None):
                 data['state']):
             state = data['state']
         if ('run_time' in data and
-                data['run_time']):
+                (data['run_time'] or data['run_time'] == 0)):
             run_time = data['run_time']
         if ('repeat' in data and
-                data['repeat']):
+                (data['repeat'] or data['repeat'] == 0)):
             repeat = data['repeat']
         if ('uuid' in data and
                 data['uuid']):
@@ -280,10 +280,10 @@ def addRule(device_id, data=None):
                 data['state']):
             state = data['state']
         if ('run_time' in data and
-                data['run_time']):
+                (data['run_time'] or data['run_time'] == 0)):
             run_time = data['run_time']
         if ('repeat' in data and
-                data['repeat']):
+                (data['repeat'] or data['repeat'] == 0)):
             repeat = data['repeat']
         if ('uuid' in data and
                 data['uuid']):
