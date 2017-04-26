@@ -1,23 +1,21 @@
-import calendar
-import datetime
-import os
-import ngrok
-import socketio
-import eventlet.wsgi
 import json
+import os
 import threading
 import time
-import uuid
+
+import eventlet.wsgi
+import ngrok
+import socketio
+from flask import Flask, request, abort
+from flask_cors import cross_origin
+from sortedcontainers import SortedList
 
 from models.Database import database
-from sortedcontainers import SortedList
-from utilities.HttpManager import *
+from utilities.AuthO import requires_auth, GetUserId, GetUserInfo
 from utilities.DatabaseManager import *
-from utilities.RulesManager import *
-from utilities.AuthO import handle_error, requires_auth, GetUserId, GetUserInfo
+from utilities.HttpManager import *
 from utilities.Package import is_local
-from flask import Flask, render_template, request, abort
-from flask_cors import cross_origin
+from utilities.RulesManager import *
 
 joulie_url = "https://joulie-core.herokuapp.com"
 cylon_url = "https://joulie-cylon.herokuapp.com"
@@ -36,6 +34,17 @@ cylon = CylonManager()
 db = DatabaseManager()
 database = database()
 rules = SortedList()
+rules_for_delete = []
+
+
+def start_rules():
+    if not is_local():
+        return
+
+    local_rules = db.GetRules()
+    for rule in local_rules:
+        device = db.GetDevice(id=rule.device_id)
+        rules.add(Rule.create(device.uuid, rule.run_time, rule.state, rule.run_repeat, rule.uuid))
 
 
 def rules_check():
@@ -43,6 +52,13 @@ def rules_check():
     now = time.time()
     while len(rules) > 0 and rules[0].time < now:
         current = rules[0]
+
+        # check if rule needs to be deleted
+        if current.uuid in rules_for_delete:
+            rules.__delitem__(0)
+            rules_for_delete.remove(current.uuid)
+            continue
+
         # run rule
         if current.state == 1:
             data = json.loads(cylon_on_command)
@@ -50,13 +66,24 @@ def rules_check():
             data = json.loads(cylon_off_command)
 
         url = "http://localhost:8000/device/{}/{}".format(current.device, cylon_power_command)
-        result = HttpManager.Post(url, json=data)
+
+        try:
+            result = HttpManager.Post(url, json=data)
+        except Exception, e:
+            print "Got exception:"
+            print e
+
+        # restarting rule
+        new_rule = current.restart()
+        if new_rule:
+            rules.add(new_rule)
 
         # with app.app_context():
         #     deviceCommand(current.device, cylon_power_command, data)
 
         rules.__delitem__(0)
 
+start_rules()
 rules_check()
 
 
@@ -134,21 +161,33 @@ def addUserRule(user_id, device_id, data=None, user=None, device=None):
     if not data:
         data = request.get_json()
 
+    if not user:
+        user = db.GetUser(user_id=user_id)
+    if not user:
+        abort(503)
+
+    if not device:
+        device = db.GetDevice(uuid=device_id)
+    if not device:
+        abort(503)
+
     if not is_local():
-        if not user:
-            user = db.GetUser(user_id=user_id)
-        if not user:
+        c_url = user.cylon_url
+
+        url = c_url + "/user/{}/device/{}/rule".format(user_id, device_id)
+        response = HttpManager.Post(url, json=data)
+
+        print "Got response from server-core. \nCode: {}\nMessage: {}".format(response.status_code, response.text)
+        if response.status_code != 200:
+            print "Got {} back instead of 200".format(response.status_code)
             abort(503)
 
-        if not device:
-            device = db.GetDevice(uuid=device_id)
-        if not device:
-            abort(503)
+        return response.text
 
-    # TODO : Check this method
     state = None
     run_time = None
     repeat = None
+    guid = None
     if data:
         if ('state' in data and
                 data['state']):
@@ -159,12 +198,21 @@ def addUserRule(user_id, device_id, data=None, user=None, device=None):
         if ('repeat' in data and
                 data['repeat']):
             repeat = data['repeat']
+        if ('uuid' in data and
+                data['uuid']):
+            guid = data['uuid']
 
     if not state or not run_time:
         print "No state or run time"
         abort(503)
 
-    rules.add(Rule(device_id, int(state), int(run_time), 0))
+    print "Adding rule to db"
+    db.AddRule(run_time, repeat, state, user.id, device.id, guid)
+    print "Rule added to db"
+
+    rules.add(Rule.create(device_id, run_time, state, repeat, guid))
+
+    return "Done"
 
 
 @app.route('/device/<string:device_id>/rule', methods=['POST'])
@@ -188,10 +236,58 @@ def addRule(device_id, data=None):
     if not device:
         abort(503)
 
+    data['uuid'] = str(uuid.uuid4())
     result = addUserRule(user_id, device_id, data, user, device)
 
-    # TODO : Finish addRule
-    #db.AddRule(int(run_time), 0, int(state),)
+    state = None
+    run_time = None
+    repeat = None
+    guid = None
+    if data:
+        if ('state' in data and
+                data['state']):
+            state = data['state']
+        if ('run_time' in data and
+                data['run_time']):
+            run_time = data['run_time']
+        if ('repeat' in data and
+                data['repeat']):
+            repeat = data['repeat']
+        if ('uuid' in data and
+                data['uuid']):
+            guid = data['uuid']
+
+    if not state or not run_time:
+        print "No state or run time"
+        abort(503)
+
+    db.AddRule(run_time, repeat, state, user.id, device.id, guid)
+    db.AddRule(int(run_time), 0, int(state),)
+
+    return "Done"
+
+
+@app.route('/rule/<string:rule_id>', methods=['DELETE'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def deleteRule(rule_id):
+    print "Deleting rule"
+
+    db.DeleteRule(uuid=rule_id)
+    print "Deleted rule from db"
+
+    if is_local():
+        if rule_id not in rules_for_delete:
+            rules_for_delete.append(rule_id)
+            print "Added rule to exception list"
+    else:
+        head = request.headers
+        user_id = GetUserId(head)
+        user = db.GetUser(user_id=user_id)
+        c_url = user.cylon_url
+
+        url = c_url + "/rule/{}".format(rule_id)
+        response = HttpManager.Delete(url)
 
     return "Done"
 
@@ -1025,7 +1121,7 @@ def addEnergyUsage(device):
         if ('metadata' in data and
                 data['metadata']):
             metadata = data['metadata']
-    if not value:
+    if not value and value != 0:
         print "Value not found"
         print data
         abort(503)
@@ -1071,7 +1167,7 @@ def on_data(sid, data):
     value = None
     metadata = None
     if ('kw' in data and
-            data['kw']):
+            (data['kw'] or data['kw'] == 0)):
         value = data['kw']
     if ('uuid' in data and
             data['uuid']):

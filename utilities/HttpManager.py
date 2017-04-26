@@ -45,6 +45,24 @@ class HttpManager(object):
             print "Got exception: " + str(e)
             return None
 
+    @staticmethod
+    def Delete(url, data=None, json=None, headers=None):
+        print "Doing DELETE to [{}]".format(url)
+
+        try:
+            if json:
+                if headers:
+                    return requests.delete(url, json=json, headers=headers)
+
+                return requests.delete(url, json=json)
+
+            if headers:
+                return requests.delete(url, data=data, headers=headers)
+
+            return requests.delete(url, data=data)
+        except ConnectionError, e:
+            print "Got exception: " + str(e)
+            return None
 
 #
 # Manager that performs actions on Cylon side

@@ -113,12 +113,43 @@ class DatabaseManager(object):
     # RULES
     #
 
-    def AddRule(self, run_time, run_repeat, state, owner_id, device_id):
-        rule = Rules(type_id=2, device_id=device_id, owner_id=owner_id, state=state, run_time=run_time, run_repeat=run_repeat)
+    def GetRule(self, id=None, uuid=None):
+        try:
+            if id:
+                return Rules.get(Rules.id == id)
+            if uuid:
+                return Rules.get(Rules.uuid == uuid)
+        except DoesNotExist:
+            return None
+
+        raise AttributeError("No parameters specified. Nothing was done")
+
+    def GetRules(self, owner_id=None, device_id=None):
+        if owner_id:
+            try:
+                return Rules.select().where(Rules.owner_id == owner_id)
+            except DoesNotExist:
+                return None
+        elif device_id:
+            try:
+                return Rules.select().where(Rules.device_id == device_id)
+            except DoesNotExist:
+                return None
+        else:
+            return Rules.select()
+
+    def AddRule(self, run_time, run_repeat, state, owner_id, device_id, uuid):
+        rule = Rules(type_id=2, device_id=device_id, owner_id=owner_id, state=state, run_time=run_time, run_repeat=run_repeat, uuid=uuid)
         rule.save()
 
         return True
 
+    def DeleteRule(self, id=None, uuid=None):
+        rule = self.GetRule(id, uuid)
+        if rule:
+            rule.delete_instance()
+
+        return True
     #
     # ENERGY LOGS
     #

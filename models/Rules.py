@@ -12,6 +12,7 @@ class Rules(DatabaseModel):
     state = peewee.IntegerField()
     run_time = peewee.IntegerField()
     run_repeat = peewee.IntegerField()
+    uuid = peewee.CharField()
     creation_date = peewee.DateTimeField(default=datetime.datetime.utcnow)
     modify_date = peewee.DateTimeField(default=datetime.datetime.utcnow)
     sync_date = peewee.DateTimeField(default=datetime.datetime.utcnow)
