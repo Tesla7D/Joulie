@@ -1118,13 +1118,14 @@ def deviceCommand(device, command, data=None):
         print "No user"
         abort(500)
 
-    head = request.headers
-    user_id = GetUserId(head)
-    current_user = db.GetUser(user_id=user_id)
-    if owner_id != current_user.id:
-        if not db.GetDeviceAccess(device_info, current_user):
-            print "No access for current user"
-            abort(401)
+    if not is_local():
+        head = request.headers
+        user_id = GetUserId(head)
+        current_user = db.GetUser(user_id=user_id)
+        if owner_id != current_user.id:
+            if not db.GetDeviceAccess(device_info, current_user):
+                print "No access for current user"
+                abort(401)
 
     robot = user.uuid
 
