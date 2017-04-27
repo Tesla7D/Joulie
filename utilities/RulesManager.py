@@ -1,7 +1,6 @@
 import datetime
 import calendar
 import uuid
-import math
 
 
 class Rule(object):
@@ -13,6 +12,8 @@ class Rule(object):
         self.repeat = repeat
         self.uuid = guid
         self.rule_time = rule_time
+
+        print "Created new rule {}".format(self.uuid)
 
     def __cmp__(self, other):
         return cmp(self.time, other.time)

@@ -10,14 +10,16 @@ autho_url = "https://joulie.auth0.com"
 autho_tokeninfo = "tokeninfo"
 autho_user_id_field = "?fields=user_id"
 
-client_id = client_secret = ""
+client_id = client_secret = api_token = ""
 dirName = "Joulie"
 
 if ('AUTHO_CLIENT_ID' in os.environ and
-    'AUTHO_CLIENT_SECRET' in os.environ):
+    'AUTHO_CLIENT_SECRET' in os.environ and
+    'AUTHO_API_TOKEN' in os.environ):
 
     client_id = os.environ.get('AUTHO_CLIENT_ID')
     client_secret = os.environ.get('AUTHO_CLIENT_SECRET')
+    api_token = os.environ.get('AUTHO_API_TOKEN')
 else:
     workDir = os.path.dirname(os.path.realpath(__file__))
     index = workDir.rfind(dirName)
@@ -31,6 +33,7 @@ else:
 
         client_id = data["client_id"]
         client_secret = data["client_secret"]
+        api_token = data["api_token"]
 
 
 def handle_error(error, status_code):
@@ -93,6 +96,10 @@ def requires_auth(f):
         return f(*args, **kwargs)
 
     return decorated
+
+
+def GetToken():
+    return api_token
 
 
 def GetUserInfo(header):

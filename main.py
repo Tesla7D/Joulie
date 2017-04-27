@@ -11,7 +11,7 @@ from flask_cors import cross_origin
 from sortedcontainers import SortedList
 
 from models.Database import database
-from utilities.AuthO import requires_auth, GetUserId, GetUserInfo
+from utilities.AuthO import requires_auth, GetUserId, GetUserInfo, GetToken
 from utilities.DatabaseManager import *
 from utilities.HttpManager import *
 from utilities.Package import is_local
@@ -27,6 +27,7 @@ cylon_command = "api/robots/{}/devices/{}/commands/{}"
 cylon_power_command = "set_power_state"
 cylon_on_command = "{\"State\": \"1\"}"
 cylon_off_command = "{\"State\": \"0\"}"
+autho_search = "https://joulie.auth0.com/api/v2/users?fields=user_id&q=email:{}"
 
 sio = socketio.Server()
 app = Flask(__name__)
@@ -35,9 +36,6 @@ db = DatabaseManager()
 database = database()
 rules = SortedList()
 rules_for_delete = []
-
-
-test = Rule.create("test", 2235, 2, 128, "test")
 
 
 def start_rules():
@@ -412,7 +410,26 @@ def getUser(user_id):
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def findUser(email):
-    return None
+    # TODO : Finish user search
+
+    if is_local():
+        return "none"
+
+    header = {"Authorization": "Bearer {}".format(GetToken())}
+    url = autho_search.format(email)
+    result = HttpManager.Get(url, headers=header)
+    if result.status_code != 200:
+        return "none"
+
+    data = json.loads(result.text)
+    if len(data) != 1:
+        return "none"
+
+    if ("user_id" not in data[0] or
+            not data[0]["user_id"]):
+        return "none"
+
+    return data[0]["user_id"]
 
 @app.route('/newuser', methods=['POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
