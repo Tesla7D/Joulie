@@ -34,6 +34,9 @@ class Rule(object):
         if repeat == 0:
             return Rule._create_single(device, rule_time, state, guid)
 
+        if repeat >= 128:
+            return Rule._create_minutes(device, rule_time, state, guid)
+
         today = datetime.datetime.utcnow()
         today_weekday = today.weekday()
 
@@ -92,4 +95,16 @@ class Rule(object):
 
     @staticmethod
     def _create_minutes(device, rule_time, state, guid=None):
-        return None
+        today = datetime.datetime.utcnow()
+
+        minute = rule_time % 10
+        diff = minute - today.minute % 10
+        if diff < 0:
+            diff += 10
+
+        rule_date = today + datetime.timedelta(minutes=diff)
+
+        if not guid:
+            guid = uuid.uuid4()
+
+        return Rule(device, int(state), calendar.timegm(rule_date.timetuple()), 0, guid, rule_time)

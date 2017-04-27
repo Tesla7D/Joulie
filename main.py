@@ -37,6 +37,9 @@ rules = SortedList()
 rules_for_delete = []
 
 
+test = Rule.create("test", 2235, 2, 128, "test")
+
+
 def start_rules():
     if not is_local():
         return
@@ -911,7 +914,9 @@ def removeDevice(device):
     c_url = user.cylon_url
     robot = user.uuid
 
-    return cylon.RemoveDevice(robot, device, c_url=c_url)
+    result = cylon.RemoveDevice(robot, device, c_url=c_url)
+
+    return result.text
 
 
 @app.route('/device/<string:device_id>/share/<string:user_id>', methods=['POST'])
