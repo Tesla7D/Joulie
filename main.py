@@ -83,14 +83,17 @@ def rules_check():
         new_rule = current.restart()
         if new_rule:
             rules.add(new_rule)
+        else:
+            db.DeleteRule(uuid=current.uuid)
 
         # with app.app_context():
         #     deviceCommand(current.device, cylon_power_command, data)
 
         rules.__delitem__(0)
 
-start_rules()
-rules_check()
+if is_local():
+    start_rules()
+    rules_check()
 
 
 def cylon_check():
@@ -1197,6 +1200,21 @@ def addEnergyUsage(device):
 
     return "Done"
 
+
+@app.route('/device/<string:device>/state', methods=['POST'])
+def deviceState(device):
+    print "Running deviceState"
+
+    if is_local():
+        abort(503)
+
+    data = request.get_json()
+    data['uuid'] = device
+
+    sio.emit("state", json.dumps(data), namespace="/api")
+
+    return "Done"
+
 #
 # Socket.io endpoints
 #
@@ -1260,6 +1278,38 @@ def on_data(sid, data):
             print e
     else:
         return
+
+@sio.on('device state', namespace='/api')
+def on_data(sid, data):
+    print('got state ', data, " from ", sid)
+
+    try:
+        data = json.loads(data)
+    except Exception, e:
+        print "Got exception"
+        print e
+        return
+
+    if not data:
+        return
+
+    device_id = None
+    state = None
+    if ('state' in data and
+            (data['state'] or data['state'] == 0)):
+        state = data['state']
+    if ('uuid' in data and
+            data['uuid']):
+        device_id = data['uuid']
+
+    json_data = {"state": state}
+    url = joulie_url + "/device/{}/state".format(device_id)
+
+    print "Sending state data"
+    print json_data
+    result = HttpManager.Post(url, json=json_data)
+
+    return
 
 if __name__ == '__main__':
     # wrap Flask application with engineio's middleware
