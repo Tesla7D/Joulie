@@ -25,8 +25,8 @@ cylon_add_robot = "api/commands/create_robot"
 cylon_remove_robot = "api/commands/remove_robot"
 cylon_command = "api/robots/{}/devices/{}/commands/{}"
 cylon_power_command = "set_power_state"
-cylon_on_command = "{\"State\": \"1\"}"
-cylon_off_command = "{\"State\": \"0\"}"
+cylon_on_command = "{\"state\": \"1\"}"
+cylon_off_command = "{\"state\": \"0\"}"
 autho_search = "https://joulie.auth0.com/api/v2/users?fields=user_id&q=email:{}"
 
 sio = socketio.Server()
@@ -63,9 +63,12 @@ def rules_check():
             continue
 
         # run rule
-        if current.state == 1:
+        state = int(current.state)
+        if state == 1:
+            print "Using ON command"
             data = json.loads(cylon_on_command)
         else:
+            print "Using OFF command"
             data = json.loads(cylon_off_command)
 
         url = "http://localhost:8000/device/{}/{}".format(current.device, cylon_power_command)
@@ -1110,6 +1113,9 @@ def deviceCommandLocal(robot, device, command, user=None, data=None):
         return result.text
 
     # code for local version
+    print "Command data:"
+    print data
+
     result = cylon.RunCommand(robot, device, command, data)
     if not result:
         print "No result from cylon"
