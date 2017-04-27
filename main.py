@@ -49,6 +49,7 @@ def start_rules():
 
 
 def rules_check():
+    print "Doing rule check"
     threading.Timer(60, rules_check).start()
     now = time.time()
     while len(rules) > 0 and rules[0].time < now:
@@ -246,6 +247,7 @@ def addUserRule(user_id, device_id, data=None, user=None, device=None):
 
     try:
         rules.add(Rule.create(device_id, run_time, state, repeat, guid))
+        print "Added rule to list"
     except Exception, e:
         print "Got exception:"
         print e
