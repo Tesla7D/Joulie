@@ -1237,6 +1237,8 @@ def message(sid, data):
 @sio.on('data publish', namespace='/api')
 def on_data(sid, data):
     print('got data ', data, " from ", sid)
+    if not is_local():
+        return
 
     try:
         data = json.loads(data)
@@ -1282,6 +1284,8 @@ def on_data(sid, data):
 @sio.on('device state', namespace='/api')
 def on_data(sid, data):
     print('got state ', data, " from ", sid)
+    if not is_local():
+        return
 
     try:
         data = json.loads(data)
